@@ -1,0 +1,1 @@
+- [Word Smash M1 constraints](word-smash-m1.md) — offline file:// XHR-only asset loading, TTS fallback audio, all decisions documented in DECISIONS.md

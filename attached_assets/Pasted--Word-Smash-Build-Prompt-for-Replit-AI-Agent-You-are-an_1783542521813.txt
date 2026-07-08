@@ -1,0 +1,53 @@
+# Word Smash — Build Prompt for Replit / AI Agent
+
+You are an autonomous coding agent building **Word Smash**, an offline literacy web game for young children (ages 4–8, pre-readers). It ships as a third-party web game inside Curious Learning's **Curious Reader** container app (an offline-first Android/iOS app used in low-connectivity environments).
+
+## Source documents — read ALL THREE in full before writing any code
+
+1. **Game Design Document v3.0** — WHAT to build. Approved; no open design questions.
+   https://docs.google.com/document/d/1TH3G68bQXPSZQMiz5dDX9QtxI3nFIoqXRRPgB2GAZ3Q/edit?usp=sharing
+2. **Curious Reader Third-Party Game Developer Specification v1.1** (third-party-game-spec.md) — HOW it must run, package, report data, and upload.
+   https://drive.google.com/file/d/1311hplshajQa9kqUhCqMxZqIhx7sobx2/view?usp=drive_link
+3. **Word Smash levels spreadsheet** — level and word content. One tab per language (English first). The language tab is ALWAYS authoritative over any content snapshot in the GDD.
+   https://docs.google.com/spreadsheets/d/1X_A1EnF4ySLp508donSBBKuL-mDYG4Ojlv7ItcWCXfo/edit?usp=sharing
+
+Precedence when documents conflict: **container spec > GDD > spreadsheet snapshot inside the GDD** (the live spreadsheet always beats the GDD's copy of its content). Do not invent behavior not found in these documents; if something is genuinely unspecified, choose the simplest option consistent with the GDD's design pillars and record the decision in a DECISIONS.md file in the repo.
+
+## The game in one paragraph
+
+A word appears on a workbench and auto-plays slowly. The child smashes it with a hammer; it breaks apart EXACTLY at the breakpoints defined in the level data (dashes in the spreadsheet — pieces may be letters, digraphs like "ee"/"gg", or syllables like "cac"/"tus"). The child drags pieces back into ordered slots: each piece speaks its in-word sound on touch, each slot has a play button for its target sound, ghost levels show outline hints in the slots, no-ghost levels don't. Wrong placements bounce out playfully — no fail states. Re-smashing is allowed at any time and re-scatters everything, including placed pieces. Completed words become plaques on the workshop walls (ghost-styled after ghost levels, solid after no-ghost levels; when the wall fills, new plaques layer on top of old). The hammer evolves — larger and more colorful — with each level completed. No text anywhere, no mascot (first-run tutorial is a hand icon that demonstrates the hammer drag until the child does it), no network, landscape-locked.
+
+## Non-negotiable constraints (verify against spec §1–§6 before AND after implementation)
+
+- Runs from a `file://` WebView, fully offline. ZERO outbound network calls of any kind. Any NETGUARD_BLOCK log entry = failed build.
+- Bundler publicPath `./`; every asset reachable by RELATIVE path; no absolute paths in code, CSS url(), or JSON; no `.map` files shipped; no CDN script tags; no Service Workers; no analytics/feature-flag/crash SDKs (build-time stubbed in the standalone target).
+- Use the spec §2.3 `loadBinary()` XHR pattern for ALL local binaries (fonts via FontFace from ArrayBuffers, audio buffers, JSON). Never `fetch()` local assets; never touch the Cache Storage API on `file://`. Preload with `Promise.allSettled`, never `Promise.all`; substitute a 1-frame silent buffer for any audio that fails to decode.
+- Read `cr_lang` and `cr_user_id` from `window.location.search`. Persist all game state in localStorage, namespaced per language (current level, per-word completion + highest level reached per word, plaque wall state, hammer stage, tutorial flags).
+- ALL level structure comes from the language JSON generated from the spreadsheet — no hardcoded words, levels, or unit segmentations anywhere in code (GDD §4).
+- ALL speech is pre-recorded MP3, generated with ElevenLabs (English v1), referenced by relative path from the language JSON, one file per word (slow), per word (natural — always a separate file; duplicate the recording if a distinct slow take isn't achievable), and per unit-in-word (contextual sound as pronounced IN THAT WORD, never letter names). Files must be independently replaceable with zero code changes (GDD §7).
+- Data reporting ONLY via the `cr_event` postMessage bridge (spec §6) with the GDD §10 minimal event set (session_start, word_completed incl. replay flag, level_completed, plus the summary_data aggregate). Fresh UUID v4 per payload; fire-and-forget; silent no-op outside the container; sub_app_id "wordsmash".
+- Packaging: Layout A 2-tier per spec §5 — `wordsmash-core.zip` (index.html at ZIP root, engine + shared assets, NO lang/ directory) and `wordsmash-lang-english.zip` (only `lang/english/…`). ZIPs must merge cleanly. Tile icon: true PNG (verify with `file`), square 512×512, delivered alongside the lang ZIP, not inside it.
+
+## Deliverables
+
+1. Game source with a dedicated standalone build target, plus README covering build and test steps.
+2. Content build script: spreadsheet tab → `lang/<code>/wordsmash.json`, with loud validation (duplicate levels/words, missing audio files, bad ghost values, empty units, any absolute URL) per GDD §4.3.
+3. English audio set (ElevenLabs), named per GDD §7 conventions, loudness-normalized, with a QA pass on every unit file for correct contextual pronunciation.
+4. `wordsmash-core.zip`, `wordsmash-lang-english.zip`, and the 512×512 PNG tile icon.
+5. Completed self-verification checklist from spec §7 (7a build-time, 7b offline load in Chrome from `file://` with network Offline, 7c ZIP integrity, 7d event emission) with evidence, before any upload.
+6. DECISIONS.md logging any judgment calls made where documents were silent.
+
+## Milestones (work in this order; stop and demo at each)
+
+- **M1 — Core loop prototype:** English levels 1–4 from the spreadsheet pipeline, hand-icon tutorial, ghost/no-ghost, re-smash-anytime, real ElevenLabs audio for those words, placeholder art, localStorage persistence, runs fully offline from `file://`, landscape.
+- **M2 — Full content and meta:** all 10 English levels including syllable-breakpoint words, parameterized hammer evolution (3–4 silhouettes + size/palette ramp), plaque wall with ghost→full upgrade, layering, single-tap audio replay and double-tap/long-press playable replay (at the highest level reached for that word, then return to level flow), hints, celebrations, cr_event minimal set.
+- **M3 — Package and ship:** final art, performance pass (30fps floor on 1GB-RAM Android WebViews, <10s offline load), ZIPs + icon, checklist 7c, upload to the development channel per spec §8, in-container verification with the Curious Learning team, then promotion by CL staff.
+
+## Before you start / when you need humans
+
+Confirm with the Curious Learning team (GDD §12.2): the engine slug and sub_app_id (`wordsmash` proposed), the CMS server base URL and MCP API key for uploads, the WebView landscape-lock configuration for the tile, and the exact `cr_lang` code (`english` assumed). Never invent credentials, server URLs, or identifiers — ask. Do not attempt any upload or promotion step without the credentials and explicit go-ahead.
+
+## Definition of done
+
+A production tile in Curious Reader that a pre-reader can play unaided: loads in under 10 seconds with the device fully offline, plays all 10 English levels driven entirely by the spreadsheet data, survives app restarts with progress intact, emits well-formed cr_event envelopes visible in the container diagnostic log (and syncing after airplane mode), and shows zero network attempts and zero console errors in the offline Chrome test.
+

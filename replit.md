@@ -1,45 +1,56 @@
-# [Project name]
+# Word Smash
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+An offline literacy web game for children ages 4–8 built for Curious Learning's Curious Reader container (offline-first Android/iOS WebView from `file://`). Children smash words with a hammer, scatter letter tiles, then drag them back to rebuild the word.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/word-smash run dev` — run the game (port 23518, preview at `/`)
+- `pnpm --filter @workspace/api-server run dev` — run the API server (port 8080)
 - `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- Game: React 19 + Vite (react-vite artifact at `/`)
+- No backend needed for the game — pure client-side with localStorage
+- Audio: Web Audio API foley + Web Speech API TTS fallback (ElevenLabs MP3s deferred to M2)
+- Persistence: localStorage (progress, plaques, hammer stage)
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/word-smash/` — the game itself (react-vite artifact)
+  - `src/game/` — core engine: types, audio, storage, events, physics
+  - `src/components/` — React game components
+  - `public/lang/english/wordsmash.json` — authoritative 10-level English language pack
+  - `DECISIONS.md` — architecture decisions and offline constraints
+- `artifacts/api-server/` — unused for M1, available for future leaderboard/analytics
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- All binaries (audio, JSON) loaded via `loadBinary()` XHR — required for `file://` offline WebView
+- Game state in a single `useReducer` in `GameScene.tsx`; side effects (audio, localStorage) called imperatively in handlers, never in the reducer
+- Audio: tries XHR → AudioBuffer; falls back to `speechSynthesis.speak()` for dev (no real MP3 files in M1); foley synthesised via Web Audio oscillators
+- Fonts: Google Fonts CDN at dev time; must be bundled as WOFF2 via FontFace ArrayBuffer for M2 offline APK
+- cr_event bridge: `window.ReactNativeWebView?.postMessage()` — silent no-op outside Curious Reader container
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+M1 (complete): English levels 1–4 playable — ghost-letter and no-ghost word groups (2-phoneme digraph words, CVC words). Hammer smash, scatter, drag-to-rebuild, plaque wall, hammer evolution, localStorage persistence, tutorial hand icon.
+
+M2 (planned): Real ElevenLabs MP3 audio, WOFF2 bundled fonts, `vite.standalone.config.ts` with `base: './'` for APK bundle, levels 5–10.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+_Populate as you build._
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Do NOT use `fetch()`, `<audio>`, or CDN script tags — offline WebView blocks them. Use `loadBinary()` XHR for all external assets.
+- `file://` XHR returns status 0 on success (not 200) — the JSON/binary loaders already handle this.
+- Run `pnpm run typecheck` from workspace root before testing — leaf artifact typechecks need fresh lib declarations.
+- Google Fonts `@import` in CSS works for dev but must be replaced with self-hosted WOFF2 for the offline APK build.
 
 ## Pointers
 
 - See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- See `artifacts/word-smash/DECISIONS.md` for detailed architecture decisions

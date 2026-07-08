@@ -37,7 +37,9 @@ An offline literacy web game for children ages 4–8 built for Curious Learning'
 
 M1 (complete): English levels 1–4 playable — ghost-letter and no-ghost word groups (2-phoneme digraph words, CVC words). Hammer smash, scatter, drag-to-rebuild, plaque wall, hammer evolution, localStorage persistence, tutorial hand icon.
 
-M2 (planned): Real ElevenLabs MP3 audio, WOFF2 bundled fonts, `vite.standalone.config.ts` with `base: './'` for APK bundle, levels 5–10.
+M2 (complete): Phoneme-sound TTS (says /b/ "buh", never letter names), level indicator fix, self-hosted WOFF2 font via FontFace ArrayBuffer, `vite.standalone.config.ts` (`build:standalone` → `dist/standalone/`, base `./`) for the offline APK bundle, levels 5–10 playable.
+
+M3 (planned): Real recorded MP3 audio (ElevenLabs or voice talent) — MUST be phoneme sounds, never letter names.
 
 ## User preferences
 

@@ -64,6 +64,31 @@ function playBuffer(buffer: AudioBuffer, interrupt = true): void {
   };
 }
 
+// Phoneme-sound approximations for the Web Speech fallback.
+// CRITICAL: units must be spoken as the SOUND the letter makes in the word
+// (/b/ = "buh"), never the letter NAME ("bee"). Real recorded MP3s (M3+)
+// must follow the same rule.
+const PHONEME_TTS: Record<string, string> = {
+  a: 'ah', e: 'eh', i: 'ih', o: 'aw', u: 'uh',
+  b: 'buh', c: 'kuh', d: 'duh', f: 'fff', g: 'guh',
+  h: 'hhh', j: 'juh', k: 'kuh', l: 'lll', m: 'mmm',
+  n: 'nnn', p: 'puh', q: 'kwuh', r: 'rrr', s: 'sss',
+  t: 'tuh', v: 'vvv', w: 'wuh', x: 'ks', y: 'yuh', z: 'zzz',
+  gg: 'guh', ee: 'ee', ea: 'ee', oo: 'ooo', ey: 'ee', er: 'ur',
+  // Syllable units (L7/L8 two-syllable words) — spelled so TTS says the
+  // in-word syllable sound, not a misreading of the raw letters.
+  cac: 'kack', tus: 'tuss',       // cactus
+  ba: 'bay', by: 'bee',           // baby
+  pen: 'pen', cil: 'sill',        // pencil
+  mon: 'mun', key: 'kee',         // monkey
+  ti: 'tie', ger: 'gur',          // tiger
+  ze: 'zee', bra: 'bruh',         // zebra
+};
+
+function phonemeApprox(unit: string): string {
+  return PHONEME_TTS[unit.toLowerCase()] ?? unit;
+}
+
 function speakTTS(text: string, slow = false): void {
   if (!('speechSynthesis' in window)) return;
   speechSynthesis.cancel();
@@ -97,7 +122,7 @@ export async function playUnit(audioPath: string, unit: string): Promise<void> {
   if (buf && buf.length > 1) {
     playBuffer(buf, false);
   } else {
-    speakTTS(unit, false);
+    speakTTS(phonemeApprox(unit), false);
   }
 }
 

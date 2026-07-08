@@ -12,7 +12,8 @@ description: Critical offline/container constraints and architecture decisions f
 
 ## Audio
 
-- M1: no real MP3 files; audio module tries XHR → AudioBuffer, falls back to `speechSynthesis.speak()`
+- REQUIREMENT (user-mandated): unit audio must say the phoneme SOUND the letter makes in the word (/b/ = "buh"), NEVER the letter name ("bee"). Applies to TTS fallback (PHONEME_TTS map) and any future recorded MP3s.
+- M1/M2: no real MP3 files; audio module tries XHR → AudioBuffer, falls back to `speechSynthesis.speak()` through the phoneme map
 - Foley (smash, snap, kick, celebrate, hammerEvolve) synthesised via Web Audio oscillators — no files needed
 - M2: place ElevenLabs MP3s at `public/lang/english/audios/` using naming convention `{word}_{slow|natural}.mp3` and `{word}_{unit}.mp3`
 

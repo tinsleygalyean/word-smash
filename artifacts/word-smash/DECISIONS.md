@@ -1,5 +1,21 @@
 # Word Smash — Architecture Decisions
 
+## M2 scope (July 2026)
+
+- **Phoneme SOUNDS, never letter NAMES** — audio for a unit must say the sound the
+  letter makes in the word (/b/ = "buh"), NEVER the letter name ("bee"). The TTS
+  fallback now maps units through a phoneme-approximation table (`PHONEME_TTS` in
+  `src/game/audio.ts`). Any future recorded MP3s (ElevenLabs or voice talent) MUST
+  follow the same rule — record isolated phoneme sounds, not letter names.
+- Fixed level indicator: `currentLevel` is now updated on every `START_WORD`
+  dispatch from the word's level data (previously only set at initial LOAD).
+- Self-hosted `Fredoka One` WOFF2 at `public/fonts/`, loaded via XHR + FontFace
+  ArrayBuffer (`src/game/fonts.ts`) — no Google Fonts CDN dependency remains.
+- `vite.standalone.config.ts` with `base: './'` builds the offline APK bundle to
+  `dist/standalone/` (`pnpm --filter @workspace/word-smash run build:standalone`).
+  All asset URLs are relative; fonts + language pack are copied into the bundle.
+- Levels 5–10 were already defined in the language pack and are playable.
+
 ## M1 scope (July 2026)
 
 English levels 1–4 playable with all core mechanics:

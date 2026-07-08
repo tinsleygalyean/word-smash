@@ -74,6 +74,7 @@ function reducer(state: GameState, action: Action): GameState {
       return {
         ...state,
         phase: 'present',
+        currentLevel: action.levelData.level,
         currentWord: action.word,
         currentLevelData: action.levelData,
         wordQueue: action.queue,

@@ -12,7 +12,7 @@ import {
 import { emitWordCompleted, emitLevelCompleted, emitSummary } from '../game/events';
 import {
   STAGE_W, STAGE_H, WALL_H, BENCH_TOP, SAFE_LEFT, SAFE_RIGHT, TRAY_CENTER,
-  HAMMER_DOCK, PIECE_H, PIECE_GAP, unitWidth, hammerStageForLevel,
+  PIECE_H, PIECE_GAP, unitWidth, hammerStageForLevel,
 } from '../game/design';
 import { dist } from '../game/coords';
 import { Background } from './Background';
@@ -21,13 +21,16 @@ import { Tray } from './Tray';
 import { Piece } from './Piece';
 import { Hammer } from './Hammer';
 import { Wall } from './Wall';
-import { ImpactFX, Sparkles } from './Effects';
-import { TutorialHand } from './TutorialHand';
-import { LevelTransition } from './LevelTransition';
+import { ImpactFX, Sparkles, SoundRings } from './Effects';
+import { TutorialHand, type HandMode } from './TutorialHand';
+import { LevelTransition, type EarnedPlaque } from './LevelTransition';
 
 // ---------------------------------------------------------------------------
 // State
 // ---------------------------------------------------------------------------
+interface ReplayCtx { wordId: string; plaqueId: string; level: number; }
+interface PreReplay { levelNum: number; queue: string[]; }
+
 interface GameState {
   phase: GamePhase;
   currentLevel: number;
@@ -47,22 +50,27 @@ interface GameState {
   wordErrors: number;
   wordHints: number;
   wordSmashes: number;
-  transition: { from: number; to: number } | null;
+  transition: { from: number; to: number; earnedWordIds: string[] } | null;
+  replay: ReplayCtx | null;
+  preReplay: PreReplay | null;
+  levelEarnedWordIds: string[];
 }
 
 type Action =
   | { type: 'LOAD'; p: Progress }
-  | { type: 'START_WORD'; word: Word; levelData: Level; queue: string[]; pieces: PieceState[]; slots: SlotState[]; plaqueW: number; levelStart?: boolean }
+  | { type: 'START_WORD'; word: Word; levelData: Level; queue: string[]; pieces: PieceState[]; slots: SlotState[]; plaqueW: number; levelStart?: boolean; replay?: ReplayCtx | null; preReplay?: PreReplay | null }
   | { type: 'WINDUP' }
   | { type: 'WINDUP_CANCEL' }
-  | { type: 'SCATTER'; pieces: PieceState[] }
+  | { type: 'SCATTER'; pieces: PieceState[]; slots: SlotState[] }
+  | { type: 'SIM'; pieces: PieceState[] }
   | { type: 'PLACE'; pieces: PieceState[]; slots: SlotState[] }
   | { type: 'MOVE'; pieceId: string; x: number; y: number }
   | { type: 'SETTLE'; pieceId: string; x: number; y: number }
   | { type: 'COMPLETE' }
-  | { type: 'ADD_PLAQUE'; plaque: PlaqueState; completion: WordCompletion }
   | { type: 'SET_PLAQUES'; plaques: PlaqueState[] }
-  | { type: 'LEVEL_TRANSITION'; from: number; to: number; hammerStage: number }
+  | { type: 'SET_COMPLETION'; key: string; completion: WordCompletion }
+  | { type: 'MARK_EARNED'; wordId: string }
+  | { type: 'LEVEL_TRANSITION'; from: number; to: number; hammerStage: number; earnedWordIds: string[] }
   | { type: 'END_TRANSITION' }
   | { type: 'SET_HINT'; hint: HintState | null }
   | { type: 'MARK_HAMMER_DONE' }
@@ -99,13 +107,18 @@ function reducer(state: GameState, a: Action): GameState {
         wordErrors: 0,
         wordHints: 0,
         wordSmashes: 0,
+        replay: a.replay ?? null,
+        preReplay: a.preReplay ?? null,
+        levelEarnedWordIds: a.levelStart ? [] : state.levelEarnedWordIds,
       };
     case 'WINDUP':
       return { ...state, phase: 'windup' };
     case 'WINDUP_CANCEL':
       return { ...state, phase: 'present' };
     case 'SCATTER':
-      return { ...state, phase: 'rebuild', pieces: a.pieces, wordSmashes: state.wordSmashes + 1, hint: null };
+      return { ...state, phase: 'rebuild', pieces: a.pieces, slots: a.slots, wordSmashes: state.wordSmashes + 1, hint: null };
+    case 'SIM':
+      return { ...state, pieces: a.pieces };
     case 'PLACE':
       return { ...state, pieces: a.pieces, slots: a.slots };
     case 'MOVE':
@@ -114,16 +127,16 @@ function reducer(state: GameState, a: Action): GameState {
       return { ...state, pieces: state.pieces.map((p) => (p.id === a.pieceId ? { ...p, x: a.x, y: a.y } : p)) };
     case 'COMPLETE':
       return { ...state, phase: 'complete', hint: null };
-    case 'ADD_PLAQUE':
-      return {
-        ...state,
-        plaques: [...state.plaques, a.plaque],
-        completions: { ...state.completions, [a.completion.wordId + '_L' + state.currentLevel]: a.completion },
-      };
     case 'SET_PLAQUES':
       return { ...state, plaques: a.plaques };
+    case 'SET_COMPLETION':
+      return { ...state, completions: { ...state.completions, [a.key]: a.completion } };
+    case 'MARK_EARNED':
+      return state.levelEarnedWordIds.includes(a.wordId)
+        ? state
+        : { ...state, levelEarnedWordIds: [...state.levelEarnedWordIds, a.wordId] };
     case 'LEVEL_TRANSITION':
-      return { ...state, phase: 'levelComplete', transition: { from: a.from, to: a.to }, hammerStage: a.hammerStage };
+      return { ...state, phase: 'levelComplete', transition: { from: a.from, to: a.to, earnedWordIds: a.earnedWordIds }, hammerStage: a.hammerStage };
     case 'END_TRANSITION':
       return { ...state, transition: null };
     case 'SET_HINT':
@@ -161,10 +174,13 @@ const initialState: GameState = {
   wordHints: 0,
   wordSmashes: 0,
   transition: null,
+  replay: null,
+  preReplay: null,
+  levelEarnedWordIds: [],
 };
 
 // ---------------------------------------------------------------------------
-// Layout + physics helpers (reference-canvas space)
+// Layout helpers (reference-canvas space)
 // ---------------------------------------------------------------------------
 function buildLayout(word: Word): { slots: SlotState[]; pieces: PieceState[]; plaqueW: number } {
   const widths = word.units.map((u) => unitWidth(u));
@@ -185,18 +201,10 @@ function buildLayout(word: Word): { slots: SlotState[]; pieces: PieceState[]; pl
   return { slots, pieces, plaqueW: total };
 }
 
-function scatter(pieces: PieceState[], seed: number): PieceState[] {
-  let s = seed || 1;
-  const rand = () => { s = (s * 1664525 + 1013904223) & 0xffffffff; return (s >>> 0) / 0xffffffff; };
-  const left = SAFE_LEFT - 10;
-  const right = SAFE_RIGHT + 10;
-  const topY = BENCH_TOP + 46;
-  const botY = STAGE_H - 74;
-  return pieces.map((p) => {
-    const x = left + rand() * (right - left);
-    const y = topY + rand() * (botY - topY);
-    return { ...p, x, y, rotation: (rand() - 0.5) * 40, placed: false, slotIndex: null };
-  });
+function clampRot(r: number): number {
+  let v = ((r % 40) + 40) % 40; // 0..40
+  if (v > 20) v -= 40;           // -20..20  (§3 ±20° tumble)
+  return v;
 }
 
 // ---------------------------------------------------------------------------
@@ -210,12 +218,23 @@ export function GameScene({ langPack, lang }: Props) {
   const stageRef = useRef<HTMLDivElement>(null);
   const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const advanceTimer = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const simRaf = useRef<number | null>(null);
 
   // transient visual effects
   const [impact, setImpact] = useState<{ x: number; y: number; seed: number } | null>(null);
   const [sparkle, setSparkle] = useState<{ x: number; y: number; seed: number } | null>(null);
+  const [rings, setRings] = useState<{ x: number; y: number; seed: number } | null>(null);
+  const [playingSlot, setPlayingSlot] = useState<number | null>(null);
   const [shakeKey, setShakeKey] = useState(0);
   const [flying, setFlying] = useState<{ text: string; x: number; y: number; w: number; tx: number; ty: number; hop: boolean } | null>(null);
+
+  // tutorial demo (§9)
+  const [demo, setDemo] = useState<{ mode: HandMode; from?: { x: number; y: number }; to?: { x: number; y: number } } | null>(null);
+  const demoTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const earlyRelease = useRef<Record<string, number>>({});
+  const hintFired = useRef<Record<string, Set<string>>>({});
+  const ringTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const slotPlayTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ---- reference stage scaling (cover) ----
   useEffect(() => {
@@ -236,6 +255,19 @@ export function GameScene({ langPack, lang }: Props) {
     return a;
   }
 
+  // ---- sound rings + slot playback cues ----
+  function showRings(x: number, y: number) {
+    if (ringTimer.current) clearTimeout(ringTimer.current);
+    setRings({ x, y, seed: Date.now() & 0xffff });
+    ringTimer.current = setTimeout(() => setRings(null), 1100);
+  }
+  function playWordSlowCued() {
+    const w = stateRef.current.currentWord;
+    if (!w) return;
+    playWordSlow(w.audio.slow, w.display);
+    showRings(TRAY_CENTER.x, TRAY_CENTER.y);
+  }
+
   const startLevel = useCallback((levelNum: number, completions: Record<string, WordCompletion>) => {
     const levelData = getLevelData(levelNum);
     if (!levelData) return;
@@ -250,8 +282,10 @@ export function GameScene({ langPack, lang }: Props) {
     if (!word) return;
     const { pieces, slots, plaqueW } = buildLayout(word);
     dispatch({ type: 'START_WORD', word, levelData, queue, pieces, slots, plaqueW, levelStart: true });
-    advanceTimer.current.push(setTimeout(() => playWordSlow(word.audio.slow, word.display), 650));
+    advanceTimer.current.push(setTimeout(() => playWordSlowCued(), 650));
     resetHintTimer();
+    schedulePresentDemo(word.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getLevelData, lang]);
 
   useEffect(() => {
@@ -260,7 +294,11 @@ export function GameScene({ langPack, lang }: Props) {
     startLevel(saved.currentLevel, saved.completions);
     return () => {
       if (hintTimer.current) clearTimeout(hintTimer.current);
+      if (ringTimer.current) clearTimeout(ringTimer.current);
+      if (slotPlayTimer.current) clearTimeout(slotPlayTimer.current);
       advanceTimer.current.forEach(clearTimeout);
+      demoTimers.current.forEach(clearTimeout);
+      stopSim();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -282,6 +320,129 @@ export function GameScene({ langPack, lang }: Props) {
     }, 8000);
   }
 
+  // ---- tutorial demos (§9) ----
+  function firedOnce(wordId: string, mode: HandMode): boolean {
+    const set = hintFired.current[wordId] ?? (hintFired.current[wordId] = new Set());
+    if (set.has(mode)) return true;
+    set.add(mode);
+    return false;
+  }
+  function clearDemoTimers() { demoTimers.current.forEach(clearTimeout); demoTimers.current = []; }
+  function dismissDemo() {
+    clearDemoTimers();
+    // first-run hammer demo persists until the first completed smash
+    if (!(demo?.mode === 'hammer' && !stateRef.current.tutorial.hammerDone)) setDemo(null);
+  }
+  function showDemoAuto(d: { mode: HandMode; from?: { x: number; y: number }; to?: { x: number; y: number } }, autoMs: number) {
+    setDemo(d);
+    demoTimers.current.push(setTimeout(() => setDemo((cur) => (cur === d ? null : cur)), autoMs));
+  }
+  function schedulePresentDemo(wordId: string) {
+    clearDemoTimers();
+    const st = stateRef.current;
+    if (!st.tutorial.hammerDone) {
+      // first-run: persistent demonstrating hand over the hammer
+      setDemo({ mode: 'hammer' });
+      return;
+    }
+    setDemo(null);
+    // (a) 10s no-touch on a fresh un-smashed plaque → one hammer demo loop
+    demoTimers.current.push(setTimeout(() => {
+      const s = stateRef.current;
+      if (s.phase === 'present' && s.wordSmashes === 0 && !firedOnce(wordId, 'hammer')) {
+        showDemoAuto({ mode: 'hammer' }, 4800);
+      }
+    }, 10000));
+  }
+  function scheduleRebuildDemo(wordId: string) {
+    clearDemoTimers();
+    // (c) 15s scattered & none dragged → demo dragging one piece to its slot, once
+    demoTimers.current.push(setTimeout(() => {
+      const s = stateRef.current;
+      if (s.phase !== 'rebuild') return;
+      const anyPlaced = s.slots.some((sl) => sl.filled);
+      if (anyPlaced || firedOnce(wordId, 'dragPiece')) return;
+      const emptySlot = s.slots.find((sl) => !sl.filled);
+      if (!emptySlot) return;
+      const piece = s.pieces.find((p) => !p.placed && p.unit === emptySlot.unit);
+      if (!piece) return;
+      showDemoAuto({ mode: 'dragPiece', from: { x: piece.x, y: piece.y }, to: { x: emptySlot.x, y: emptySlot.y } }, 5400);
+    }, 15000));
+  }
+
+  // ---- physics scatter (§3): launch arcs, ±20° tumble, gravity, one floor bounce ----
+  function stopSim() { if (simRaf.current != null) cancelAnimationFrame(simRaf.current); simRaf.current = null; }
+
+  function runScatterPhysics(base: PieceState[], seed: number) {
+    stopSim();
+    let s = seed || 1;
+    const rand = () => { s = (s * 1664525 + 1013904223) & 0xffffffff; return (s >>> 0) / 0xffffffff; };
+    const n = base.length;
+    const floor = STAGE_H - 74;
+    const left = SAFE_LEFT - 2;
+    const right = SAFE_RIGHT + 2;
+    const g = 2600;
+    const bodies = base.map((p, i) => {
+      const rel = n > 1 ? (i - (n - 1) / 2) / Math.max(1, (n - 1) / 2) : (rand() - 0.5);
+      return {
+        id: p.id,
+        x: p.x,
+        y: p.y,
+        vx: rel * (170 + rand() * 150) + (rand() - 0.5) * 120,
+        vy: -(500 + rand() * 340),
+        rot: p.rotation,
+        vrot: (rand() - 0.5) * 520, // deg/s tumble
+        bounced: false,
+        settled: false,
+      };
+    });
+    const byId = new Map(bodies.map((b) => [b.id, b]));
+    const apply = (): PieceState[] => base.map((p) => {
+      const b = byId.get(p.id)!;
+      return { ...p, x: b.x, y: b.y, rotation: b.rot };
+    });
+
+    let last = performance.now();
+    const startT = last;
+    const frame = (now: number) => {
+      const dt = Math.min(0.032, (now - last) / 1000);
+      last = now;
+      let allSettled = true;
+      for (const b of bodies) {
+        if (b.settled) continue;
+        b.vy += g * dt;
+        b.x += b.vx * dt;
+        b.y += b.vy * dt;
+        b.rot += b.vrot * dt;
+        if (b.x < left) { b.x = left; b.vx = -b.vx * 0.4; }
+        if (b.x > right) { b.x = right; b.vx = -b.vx * 0.4; }
+        if (b.y >= floor) {
+          if (!b.bounced && b.vy > 0) {
+            b.y = floor; b.vy = -b.vy * 0.3; b.vx *= 0.7; b.vrot *= 0.4; b.bounced = true;
+          } else {
+            b.y = floor; b.vy = 0; b.vx *= 0.6;
+            if (Math.abs(b.vx) < 14) { b.vx = 0; b.settled = true; b.rot = clampRot(b.rot); }
+          }
+        }
+        if (!b.settled) allSettled = false;
+      }
+      dispatch({ type: 'SIM', pieces: apply() });
+      if (allSettled || now - startT > 1800) {
+        bodies.forEach((b) => {
+          b.settled = true;
+          b.y = Math.min(b.y, floor);
+          if (b.x > 940 && b.y > 410) b.x = 940; // never rest under the hammer dock (§1)
+          b.rot = clampRot(b.rot);
+        });
+        dispatch({ type: 'SIM', pieces: apply() });
+        simRaf.current = null;
+        return;
+      }
+      simRaf.current = requestAnimationFrame(frame);
+    };
+    simRaf.current = requestAnimationFrame(frame);
+  }
+
   // ---- smash ----
   function doStrike() {
     const st = stateRef.current;
@@ -292,12 +453,17 @@ export function GameScene({ langPack, lang }: Props) {
     setShakeKey((k) => k + 1);
     setImpact({ x: cx, y: cy, seed: Date.now() & 0xffff });
     setTimeout(() => setImpact(null), 800);
-    const scattered = scatter(st.pieces, Date.now() & 0xffff);
-    dispatch({ type: 'SCATTER', pieces: scattered });
+    dismissDemo();
+    const loose = st.pieces.map((p) => ({ ...p, placed: false, slotIndex: null }));
+    const clearedSlots = st.slots.map((s) => ({ ...s, filled: false, pieceId: null }));
+    dispatch({ type: 'SCATTER', pieces: loose, slots: clearedSlots });
+    runScatterPhysics(loose, Date.now() & 0xffff);
     if (!st.tutorial.hammerDone) {
       dispatch({ type: 'MARK_HAMMER_DONE' });
       persist({ tutorial: { hammerDone: true } });
     }
+    const wordId = st.currentWord?.id;
+    if (wordId) scheduleRebuildDemo(wordId);
     resetHintTimer();
   }
 
@@ -308,18 +474,23 @@ export function GameScene({ langPack, lang }: Props) {
     setShakeKey((k) => k + 1);
     setImpact({ x: TRAY_CENTER.x, y: TRAY_CENTER.y, seed: Date.now() & 0xffff });
     setTimeout(() => setImpact(null), 700);
-    const loose = st.pieces.filter((p) => !p.placed);
-    const rescattered = scatter(loose, Date.now() & 0xffff);
-    const map = new Map(rescattered.map((p) => [p.id, p]));
-    const merged = st.pieces.map((p) => map.get(p.id) ?? p);
-    // clear slots that held loose (none, they're placed) — keep placed intact
-    dispatch({ type: 'SCATTER', pieces: merged });
+    dismissDemo();
+    // §5: re-smash re-scatters EVERYTHING, including seated pieces
+    const all = st.pieces.map((p) => ({ ...p, placed: false, slotIndex: null }));
+    const clearedSlots = st.slots.map((s) => ({ ...s, filled: false, pieceId: null }));
+    dispatch({ type: 'SCATTER', pieces: all, slots: clearedSlots });
+    runScatterPhysics(all, Date.now() & 0xffff);
+    const wordId = st.currentWord?.id;
+    if (wordId) scheduleRebuildDemo(wordId);
     resetHintTimer();
   }
 
   // ---- piece drag ----
   function onPickup(id: string) {
+    stopSim();
     clearHint();
+    clearDemoTimers();
+    setDemo(null);
     dispatch({ type: 'SET_HINT', hint: null });
     const p = stateRef.current.pieces.find((pc) => pc.id === id);
     if (p) playUnit(p.audioPath, p.unit);
@@ -346,10 +517,9 @@ export function GameScene({ langPack, lang }: Props) {
         playFoley('thunk');
         playUnit(piece.audioPath, piece.unit);
         dispatch({ type: 'PLACE', pieces, slots });
-        if (slots.every((s) => s.filled)) { clearHint(); onWordComplete(); }
+        if (slots.every((s) => s.filled)) { clearHint(); clearDemoTimers(); setDemo(null); onWordComplete(); }
         else resetHintTimer();
       } else {
-        // wrong recess → bounce out in an arc back onto the bench
         const bx = nearest.x + (Math.random() > 0.5 ? 1 : -1) * (120 + Math.random() * 60);
         const by = STAGE_H - 90 - Math.random() * 40;
         const pieces = st.pieces.map((p) => (p.id === id ? { ...p, x: Math.max(SAFE_LEFT, Math.min(SAFE_RIGHT, bx)), y: by, rotation: (Math.random() - 0.5) * 30 } : p));
@@ -368,36 +538,50 @@ export function GameScene({ langPack, lang }: Props) {
   function onWordComplete() {
     const st = stateRef.current;
     if (!st.currentWord || !st.currentLevelData) return;
+    const isReplay = !!st.replay;
     dispatch({ type: 'COMPLETE' });
     setSparkle({ x: TRAY_CENTER.x, y: TRAY_CENTER.y, seed: Date.now() & 0xffff });
     playFoley('chime');
-    setTimeout(() => { if (stateRef.current.currentWord) playWordNatural(stateRef.current.currentWord.audio.natural, stateRef.current.currentWord.display); }, 350);
+    setTimeout(() => {
+      if (stateRef.current.currentWord) {
+        playWordNatural(stateRef.current.currentWord.audio.natural, stateRef.current.currentWord.display);
+        showRings(TRAY_CENTER.x, TRAY_CENTER.y);
+      }
+    }, 350);
 
+    const word = st.currentWord;
+    const level = st.currentLevelData.level;
     const duration = (Date.now() - st.wordStartTime) / 1000;
-    const compKey = `${st.currentWord.id}_L${st.currentLevelData.level}`;
-    const existing = st.completions[compKey];
+    const compKey = `${word.id}_L${level}`;
+    const existingComp = st.completions[compKey];
     const isGhost = st.currentLevelData.ghost;
-    const playCount = (existing?.playCount ?? 0) + 1;
+
+    // §6: ONE plaque per wordId — cumulative play count, highest level reached.
+    const existingPlaque = st.plaques.find((p) => p.wordId === word.id);
+    const playCount = (existingPlaque?.playCount ?? 0) + 1;
+    const highestLevel = Math.max(existingPlaque?.highestLevel ?? 0, level);
+
     const completion: WordCompletion = {
-      wordId: st.currentWord.id,
-      display: st.currentWord.display,
-      units: st.currentWord.units,
-      ghostDone: existing?.ghostDone || isGhost,
-      noGhostDone: existing?.noGhostDone || !isGhost,
-      highestLevel: Math.max(existing?.highestLevel || 0, st.currentLevelData.level),
+      wordId: word.id,
+      display: word.display,
+      units: word.units,
+      ghostDone: existingComp?.ghostDone || isGhost,
+      noGhostDone: existingComp?.noGhostDone || !isGhost,
+      highestLevel,
       playCount,
     };
     emitWordCompleted({
-      level: st.currentLevelData.level, wordId: st.currentWord.id, ghost: isGhost, replay: false,
+      level, wordId: word.id, ghost: isGhost, replay: isReplay,
       score: Math.max(0, st.slots.length - st.wordErrors), maxScore: st.slots.length,
       durationSeconds: duration, errors: st.wordErrors, hintsUsed: st.wordHints, smashCount: st.wordSmashes,
     });
 
-    const wallPos = wallPositionFor(st.plaques.length);
-    const word = st.currentWord;
+    // wall destination: existing plaque keeps its spot, else next free slot
+    const wallPos = existingPlaque
+      ? { x: existingPlaque.x, y: existingPlaque.y }
+      : wallPositionFor(st.plaques.length);
     const plaqueW = st.plaqueW;
 
-    // fly the completed plaque up to the wall
     advanceTimer.current.push(setTimeout(() => {
       setFlying({ text: word.display, x: TRAY_CENTER.x, y: TRAY_CENTER.y, w: plaqueW, tx: TRAY_CENTER.x, ty: TRAY_CENTER.y, hop: true });
       setSparkle(null);
@@ -406,16 +590,33 @@ export function GameScene({ langPack, lang }: Props) {
       setFlying((f) => (f ? { ...f, tx: wallPos.x, ty: wallPos.y, hop: false } : f));
     }, 1050));
     advanceTimer.current.push(setTimeout(() => {
-      const plaque: PlaqueState = {
-        plaqueId: `plq-${word.id}-L${st.currentLevel}-${Date.now()}`,
-        wordId: word.id, display: word.display, units: word.units,
-        x: wallPos.x, y: wallPos.y, zOrder: st.plaques.length, playCount,
-      };
-      dispatch({ type: 'ADD_PLAQUE', plaque, completion });
+      const maxZ = Math.max(0, ...st.plaques.map((p) => p.zOrder));
+      let plaques: PlaqueState[];
+      if (existingPlaque) {
+        plaques = st.plaques.map((p) => (p.wordId === word.id
+          ? { ...p, playCount, highestLevel, display: word.display, units: word.units, zOrder: maxZ + 1 }
+          : p));
+      } else {
+        const plaque: PlaqueState = {
+          plaqueId: `plq-${word.id}`,
+          wordId: word.id, display: word.display, units: word.units,
+          x: wallPos.x, y: wallPos.y, zOrder: st.plaques.length, playCount, highestLevel,
+        };
+        plaques = [...st.plaques, plaque];
+      }
+      dispatch({ type: 'SET_PLAQUES', plaques });
+      dispatch({ type: 'SET_COMPLETION', key: compKey, completion });
+      playFoley('woodTap');
       const newCompletions = { ...st.completions, [compKey]: completion };
-      persist({ completions: newCompletions, plaques: [...st.plaques, plaque] });
+      persist({ completions: newCompletions, plaques });
       setFlying(null);
-      advanceAfterWord(newCompletions);
+
+      if (isReplay) {
+        restoreAfterReplay();
+      } else {
+        dispatch({ type: 'MARK_EARNED', wordId: word.id });
+        advanceAfterWord(newCompletions, word.id);
+      }
     }, 1900));
   }
 
@@ -428,7 +629,7 @@ export function GameScene({ langPack, lang }: Props) {
     return { x: Math.min(1090, x), y: Math.min(WALL_H - 46, y) };
   }
 
-  function advanceAfterWord(completions: Record<string, WordCompletion>) {
+  function advanceAfterWord(completions: Record<string, WordCompletion>, justCompletedId: string) {
     const st = stateRef.current;
     if (!st.currentLevelData) return;
     const queue = st.wordQueue.slice(1);
@@ -442,28 +643,93 @@ export function GameScene({ langPack, lang }: Props) {
       const nextData = getLevelData(nextLevel);
       const fromStage = hammerStageForLevel(levelData.level);
       const toStage = hammerStageForLevel(nextLevel);
-      dispatch({ type: 'LEVEL_TRANSITION', from: fromStage, to: toStage, hammerStage: nextData ? toStage : fromStage });
-      persist({ currentLevel: nextData ? nextLevel : levelData.level, completions, hammerStage: nextData ? toStage : fromStage });
-      // LevelTransition component calls onDone → we start next level
+      const earnedWordIds = Array.from(new Set([...st.levelEarnedWordIds, justCompletedId]));
+      dispatch({ type: 'LEVEL_TRANSITION', from: fromStage, to: toStage, hammerStage: fromStage, earnedWordIds });
+      // persist + next-level start are driven by the transition beats (onPersist/onStartNext)
     } else {
       saveWordQueue(lang, levelData.level, queue);
       const nextWord = levelData.words.find((w) => w.id === queue[0]);
       if (!nextWord) return;
       const { pieces, slots, plaqueW } = buildLayout(nextWord);
       dispatch({ type: 'START_WORD', word: nextWord, levelData, queue, pieces, slots, plaqueW });
-      advanceTimer.current.push(setTimeout(() => playWordSlow(nextWord.audio.slow, nextWord.display), 550));
+      advanceTimer.current.push(setTimeout(() => playWordSlowCued(), 550));
       resetHintTimer();
+      schedulePresentDemo(nextWord.id);
     }
   }
 
-  function onTransitionDone() {
+  // ---- level transition beat callbacks (§8) ----
+  function transitionPersist() {
     const st = stateRef.current;
-    dispatch({ type: 'END_TRANSITION' });
-    const nextLevel = st.currentLevel; // already advanced in persist? no — currentLevel unchanged in state; recompute
+    if (!st.transition) return;
+    const nextLevel = st.currentLevel + 1;
+    const nextData = getLevelData(nextLevel);
+    const toStage = st.transition.to;
+    const fromStage = st.transition.from;
+    // beat 2: swap to the new hammer + persist stage & level index
+    dispatch({ type: 'LEVEL_TRANSITION', from: fromStage, to: toStage, hammerStage: nextData ? toStage : fromStage, earnedWordIds: st.transition.earnedWordIds });
+    persist({ currentLevel: nextData ? nextLevel : st.currentLevel, completions: st.completions, hammerStage: nextData ? toStage : fromStage });
+  }
+  function transitionStartNext() {
+    // beat 3: real confetti strike on the empty bench + next level plaque drops in
+    playCrash();
+    try { navigator.vibrate?.(60); } catch { /* ignore */ }
+    setShakeKey((k) => k + 1);
     const saved = getProgress(lang);
-    const next = getLevelData(saved.currentLevel);
-    if (next) startLevel(saved.currentLevel, saved.completions);
-    else if (getLevelData(nextLevel)) startLevel(nextLevel, st.completions);
+    startLevel(saved.currentLevel, saved.completions);
+  }
+  function transitionDone() {
+    dispatch({ type: 'END_TRANSITION' });
+  }
+
+  // ---- wall replay (§6): a real replay session at the highest level reached ----
+  function startReplay(plaqueId: string, wordId: string) {
+    const st = stateRef.current;
+    if (st.replay) return; // already replaying
+    const plaque = st.plaques.find((p) => p.plaqueId === plaqueId);
+    const level = plaque?.highestLevel ?? st.currentLevel;
+    const levelData = getLevelData(level) ?? st.currentLevelData;
+    const word = findWord(langPack, wordId);
+    if (!word || !levelData) return;
+    stopSim();
+    clearHint();
+    clearDemoTimers();
+    setDemo(null);
+    setFlying(null);
+    advanceTimer.current.forEach(clearTimeout);
+    advanceTimer.current = [];
+    const preReplay: PreReplay = { levelNum: st.currentLevel, queue: st.wordQueue };
+    const { pieces, slots, plaqueW } = buildLayout(word);
+    dispatch({
+      type: 'START_WORD', word, levelData, queue: [wordId], pieces, slots, plaqueW,
+      replay: { wordId, plaqueId, level }, preReplay,
+    });
+    advanceTimer.current.push(setTimeout(() => playWordSlowCued(), 500));
+    resetHintTimer();
+  }
+
+  function restoreAfterReplay() {
+    const st = stateRef.current;
+    const pre = st.preReplay;
+    if (!pre) { dispatch({ type: 'END_TRANSITION' }); return; }
+    const levelData = getLevelData(pre.levelNum);
+    if (!levelData || pre.queue.length === 0) {
+      // nothing to resume — fall back to the persisted level
+      const saved = getProgress(lang);
+      startLevel(saved.currentLevel, saved.completions);
+      return;
+    }
+    const word = levelData.words.find((w) => w.id === pre.queue[0]) ?? findWord(langPack, pre.queue[0]);
+    if (!word) {
+      const saved = getProgress(lang);
+      startLevel(saved.currentLevel, saved.completions);
+      return;
+    }
+    const { pieces, slots, plaqueW } = buildLayout(word);
+    dispatch({ type: 'START_WORD', word, levelData, queue: pre.queue, pieces, slots, plaqueW, replay: null, preReplay: null });
+    advanceTimer.current.push(setTimeout(() => playWordSlowCued(), 500));
+    resetHintTimer();
+    schedulePresentDemo(word.id);
   }
 
   function persist(patch: Partial<Progress>) {
@@ -472,16 +738,31 @@ export function GameScene({ langPack, lang }: Props) {
   }
 
   // ---- hammer callbacks ----
-  const onWindupStart = useCallback(() => dispatch({ type: 'WINDUP' }), []);
-  const onWindupCancel = useCallback(() => dispatch({ type: 'WINDUP_CANCEL' }), []);
+  const onWindupStart = useCallback(() => {
+    dispatch({ type: 'WINDUP' });
+    clearDemoTimers();
+    setDemo(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const onWindupCancel = useCallback(() => {
+    dispatch({ type: 'WINDUP_CANCEL' });
+    // §9(b): after 2 consecutive released-early half-swings, demo holding through
+    const st = stateRef.current;
+    const wordId = st.currentWord?.id;
+    if (!wordId) return;
+    earlyRelease.current[wordId] = (earlyRelease.current[wordId] ?? 0) + 1;
+    if (earlyRelease.current[wordId] >= 2 && !firedOnce(wordId, 'holdThrough')) {
+      showDemoAuto({ mode: 'holdThrough' }, 4000);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ---- render ----
   const { phase } = state;
   const showWhole = phase === 'present' || phase === 'windup';
   const showPieces = phase === 'rebuild' || phase === 'complete';
   const ghostLevel = state.currentLevelData?.ghost ?? false;
-  const hammerInteractive = phase === 'present' || phase === 'rebuild';
-  const showTutorial = !state.tutorial.hammerDone && phase === 'present';
+  const hammerInteractive = (phase === 'present' || phase === 'rebuild') && !state.transition;
 
   const hintSlot = state.hint?.type === 'slot' ? state.hint.slotIndex ?? null : null;
   const hintPieceId = (() => {
@@ -492,6 +773,22 @@ export function GameScene({ langPack, lang }: Props) {
     return match?.id ?? null;
   })();
 
+  const wallPlaques = state.replay
+    ? state.plaques.filter((p) => p.wordId !== state.replay!.wordId)
+    : state.plaques;
+
+  const earnedPlaques: EarnedPlaque[] = state.transition
+    ? state.transition.earnedWordIds
+        .map((id) => state.plaques.find((p) => p.wordId === id))
+        .filter((p): p is PlaqueState => !!p)
+        .map((p) => ({ wordId: p.wordId, display: p.display, x: p.x, y: p.y, playCount: p.playCount }))
+    : [];
+
+  const showDemo = !!demo && (
+    (demo.mode === 'dragPiece' && phase === 'rebuild') ||
+    ((demo.mode === 'hammer' || demo.mode === 'holdThrough') && (phase === 'present' || phase === 'windup'))
+  );
+
   return (
     <div className="ws-root">
       <div className="ws-stage" ref={stageRef}>
@@ -499,15 +796,13 @@ export function GameScene({ langPack, lang }: Props) {
           <Background />
 
           <Wall
-            plaques={state.plaques}
+            plaques={wallPlaques}
             stageRef={stageRef}
-            onReplay={(plaqueId, wordId) => {
+            onPlay={(wordId) => {
               const w = findWord(langPack, wordId);
-              if (w) {
-                playWordNatural(w.audio.natural, w.display);
-                bumpPlayCount(plaqueId);
-              }
+              if (w) playWordNatural(w.audio.natural, w.display);
             }}
+            onReplay={(plaqueId, wordId) => startReplay(plaqueId, wordId)}
             onMove={(plaqueId, x, y) => {
               const plaques = stateRef.current.plaques.map((p) => (p.plaqueId === plaqueId ? { ...p, x, y } : p));
               dispatch({ type: 'SET_PLAQUES', plaques });
@@ -526,7 +821,15 @@ export function GameScene({ langPack, lang }: Props) {
               slots={state.slots}
               ghost={ghostLevel}
               hintSlotIndex={hintSlot}
-              onSlotPlay={(idx) => { const s = state.slots[idx]; if (s) playUnit(s.audioPath, s.unit); }}
+              playingSlotIndex={playingSlot}
+              onSlotPlay={(idx) => {
+                const s = state.slots[idx];
+                if (!s) return;
+                playUnit(s.audioPath, s.unit);
+                if (slotPlayTimer.current) clearTimeout(slotPlayTimer.current);
+                setPlayingSlot(idx);
+                slotPlayTimer.current = setTimeout(() => setPlayingSlot(null), 700);
+              }}
             />
           )}
 
@@ -538,7 +841,7 @@ export function GameScene({ langPack, lang }: Props) {
               y={TRAY_CENTER.y}
               w={state.plaqueW}
               breathe={phase === 'present'}
-              onPlay={() => { if (state.currentWord) playWordSlow(state.currentWord.audio.slow, state.currentWord.display); }}
+              onPlay={() => playWordSlowCued()}
             />
           )}
 
@@ -585,27 +888,38 @@ export function GameScene({ langPack, lang }: Props) {
             onResmash={doResmash}
           />
 
+          {/* wind-up world vignette (§2/§3) */}
+          {phase === 'windup' && <div className="ws-vignette" />}
+
           {/* effects */}
           {impact && <ImpactFX x={impact.x} y={impact.y} seed={impact.seed} />}
           {sparkle && <Sparkles x={sparkle.x} y={sparkle.y} seed={sparkle.seed} />}
+          {rings && <SoundRings x={rings.x} y={rings.y} seed={rings.seed} />}
 
           {/* tutorial */}
-          {showTutorial && <TutorialHand target={{ x: TRAY_CENTER.x, y: TRAY_CENTER.y }} />}
+          {showDemo && demo && (
+            <TutorialHand target={{ x: TRAY_CENTER.x, y: TRAY_CENTER.y }} mode={demo.mode} from={demo.from} to={demo.to} />
+          )}
 
           {/* level transition */}
           {state.transition && (
-            <LevelTransition fromStage={state.transition.from} toStage={state.transition.to} onDone={onTransitionDone} />
+            <LevelTransition
+              fromStage={state.transition.from}
+              toStage={state.transition.to}
+              earned={earnedPlaques}
+              playWord={(wordId) => {
+                const w = findWord(langPack, wordId);
+                if (w) playWordNatural(w.audio.natural, w.display);
+              }}
+              onPersist={transitionPersist}
+              onStartNext={transitionStartNext}
+              onDone={transitionDone}
+            />
           )}
         </div>
       </div>
     </div>
   );
-
-  function bumpPlayCount(plaqueId: string) {
-    const plaques = stateRef.current.plaques.map((p) => (p.plaqueId === plaqueId ? { ...p, playCount: p.playCount + 1 } : p));
-    dispatch({ type: 'SET_PLAQUES', plaques });
-    persist({ plaques });
-  }
 }
 
 function findWord(pack: LangPack, wordId: string): Word | null {
@@ -625,7 +939,7 @@ function FlyingFace({ text, w, shrink }: { text: string; w: number; shrink: bool
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}
       >
-        <span style={{ fontFamily: "'Fredoka', system-ui, sans-serif", fontWeight: 700, fontSize: Math.round(PIECE_H * 0.52), color: '#c9553e', marginBottom: 6 }}>{text}</span>
+        <span style={{ fontFamily: "'Fredoka', system-ui, sans-serif", fontWeight: 600, fontSize: Math.round(PIECE_H * 0.52), color: '#c9553e', marginBottom: 6 }}>{text}</span>
       </div>
     </div>
   );

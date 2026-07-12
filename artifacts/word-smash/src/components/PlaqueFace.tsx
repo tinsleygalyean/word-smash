@@ -46,7 +46,7 @@ export function PlaqueFace({
 
   const textStyle: CSSProperties = {
     fontFamily: "'Fredoka', system-ui, sans-serif",
-    fontWeight: 700,
+    fontWeight: 600,
     fontSize,
     lineHeight: 1,
     letterSpacing: '0.04em',

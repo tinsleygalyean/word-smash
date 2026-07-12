@@ -9,8 +9,9 @@
   follow the same rule — record isolated phoneme sounds, not letter names.
 - Fixed level indicator: `currentLevel` is now updated on every `START_WORD`
   dispatch from the word's level data (previously only set at initial LOAD).
-- Self-hosted `Fredoka One` WOFF2 at `public/fonts/`, loaded via XHR + FontFace
-  ArrayBuffer (`src/game/fonts.ts`) — no Google Fonts CDN dependency remains.
+- Self-hosted `Fredoka` SemiBold 600 WOFF2 at `public/fonts/fredoka-600.woff2`,
+  loaded via XHR + FontFace ArrayBuffer (`src/game/fonts.ts`) — no Google Fonts
+  CDN dependency remains. (§2 mandates SemiBold 600, not Fredoka One.)
 - `vite.standalone.config.ts` with `base: './'` builds the offline APK bundle to
   `dist/standalone/` (`pnpm --filter @workspace/word-smash run build:standalone`).
   All asset URLs are relative; fonts + language pack are copied into the bundle.
@@ -163,5 +164,7 @@ Now 10 stages (`HAMMER_STAGES` recipes), advancing per level via
 
 `Fredoka` is loaded offline via `FontFace` from an ArrayBuffer using the
 `loadBinary()` XHR pattern (`src/game/fonts.ts`), from
-`${BASE_URL}fonts/fredoka-one.woff2`. The full-glyph `fredoka-one.woff2` is the
-only bundled face (an earlier weight-600 subset had incomplete glyph coverage).
+`${BASE_URL}fonts/fredoka-600.woff2`. Per the DESIGN-SPEC (§2), the game face is
+Fredoka **SemiBold 600** (not the heavier Fredoka One). The bundled
+`fredoka-600.woff2` covers the Latin range (U+0000–00FF), which is all the game's
+letter tiles need; all tile/plaque letters render at `font-weight: 600`.

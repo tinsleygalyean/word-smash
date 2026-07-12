@@ -12,6 +12,46 @@ export interface Progress {
   tutorial: TutorialFlags;
 }
 
+/**
+ * §6: ONE plaque per wordId. Old saves may hold several plaques for the same
+ * word (ghost + no-ghost + replays each appended one). Collapse them: keep the
+ * most-recently-touched position/z-order, SUM their play counts, and take the
+ * highest level reached.
+ */
+function dedupePlaques(raw: unknown[]): PlaqueState[] {
+  const byWord = new Map<string, PlaqueState>();
+  (raw as PlaqueState[]).forEach((p, i) => {
+    if (!p || !p.wordId) return;
+    const existing = byWord.get(p.wordId);
+    const normalized: PlaqueState = {
+      plaqueId: p.plaqueId ?? `plq-${p.wordId}`,
+      wordId: p.wordId,
+      display: p.display,
+      units: p.units ?? [],
+      x: p.x,
+      y: p.y,
+      zOrder: p.zOrder ?? i,
+      playCount: p.playCount ?? 1,
+      highestLevel: p.highestLevel ?? 1,
+    };
+    if (!existing) {
+      byWord.set(p.wordId, normalized);
+    } else {
+      byWord.set(p.wordId, {
+        ...normalized,
+        plaqueId: existing.plaqueId,
+        // most-recent wins for position/z (later entries were touched last)
+        x: normalized.x,
+        y: normalized.y,
+        zOrder: Math.max(existing.zOrder, normalized.zOrder),
+        playCount: existing.playCount + normalized.playCount,
+        highestLevel: Math.max(existing.highestLevel, normalized.highestLevel),
+      });
+    }
+  });
+  return Array.from(byWord.values());
+}
+
 export function getProgress(lang: string): Progress {
   try {
     const raw = localStorage.getItem(key(lang, 'progress'));
@@ -21,10 +61,7 @@ export function getProgress(lang: string): Progress {
         currentLevel: parsed.currentLevel ?? 1,
         completions: parsed.completions ?? {},
         hammerStage: parsed.hammerStage ?? 0,
-        plaques: (parsed.plaques ?? []).map((p: PlaqueState, i: number) => ({
-          ...p,
-          plaqueId: p.plaqueId ?? `plq-${p.wordId}-${i}-${p.playCount ?? 1}`,
-        })),
+        plaques: dedupePlaques(parsed.plaques ?? []),
         tutorial: { hammerDone: parsed.tutorial?.hammerDone ?? false },
       };
     }

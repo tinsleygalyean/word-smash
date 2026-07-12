@@ -42,7 +42,9 @@ export function Hammer({
   const resmashFiredRef = useRef(false);
   const pointerIdRef = useRef<number | null>(null);
 
-  const windupScale = Math.min(6.5, 720 / recipe.size);
+  // §2/§3: normalized ~5.2× wind-up scale, constant across all hammer stages so
+  // the swing fills the screen the same way at every level.
+  const windupScale = 5.2;
 
   function clearTimers() {
     timers.current.forEach(clearTimeout);

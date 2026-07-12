@@ -55,6 +55,29 @@ export function ImpactFX({ x, y, seed }: { x: number; y: number; seed: number })
   );
 }
 
+/** Expanding amber "sound rings" that pulse in sync with a word/unit playing. §3 */
+export function SoundRings({ x, y, seed }: { x: number; y: number; seed: number }) {
+  const rings = [0, 1, 2];
+  return (
+    <div key={seed} style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 25 }}>
+      {rings.map((i) => (
+        <div
+          key={i}
+          className="ws-ring"
+          style={{
+            left: x,
+            top: y,
+            width: 120,
+            height: 120,
+            border: `4px solid ${C.gold}`,
+            animationDelay: `${i * 0.22}s`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 /** Small drifting sparkles for word-complete (≤6). §4 */
 export function Sparkles({ x, y, seed }: { x: number; y: number; seed: number }) {
   const items = useMemo(() => {

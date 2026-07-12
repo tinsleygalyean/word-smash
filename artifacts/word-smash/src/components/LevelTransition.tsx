@@ -1,80 +1,209 @@
-import { useEffect, useState } from 'react';
-import { HAMMER_STAGES, HAMMER_DOCK, STAGE_W, C, type HammerStage } from '../game/design';
+import { useEffect, useRef, useState } from 'react';
+import {
+  HAMMER_STAGES, HAMMER_DOCK, STAGE_W, STAGE_H, TRAY_CENTER, PIECE_H, C,
+  finishForPlayCount, type HammerStage,
+} from '../game/design';
 import { Confetti } from './Effects';
+import { PlaqueFace } from './PlaqueFace';
 import { playFoley } from '../game/audio';
+
+export interface EarnedPlaque {
+  wordId: string;
+  display: string;
+  x: number;
+  y: number;
+  playCount: number;
+}
 
 interface Props {
   fromStage: number;
   toStage: number;
+  earned: EarnedPlaque[];
+  playWord: (wordId: string) => void;
+  onPersist: () => void;   // beat 2: hammer stage + level index persist
+  onStartNext: () => void; // beat 3: real strike (crash/shake) + next level drops
   onDone: () => void;
 }
 
+const WALL_PLAQUE_W = 150;
+const WALL_PLAQUE_H = Math.round(PIECE_H * 0.62);
+
+type Beat = 1 | 2 | 3;
+
 /**
- * 3-beat level transition (~6s), no text:
- *  1. plaques bow      (~1.6s)
- *  2. hammer transform (~2.2s) — old stage morphs to new
- *  3. confetti         (~2.2s)
+ * §8 level transition + hammer upgrade — three beats, ~6s, tap-to-skip after beat 1.
+ *  Beat 1: earned plaques bow L→R (100ms apart) while their words play back-to-back;
+ *          rising fanfare; docked hammer straightens & shivers.
+ *  Beat 2: world dims, hammer to center, spins ×2, white flash → next stage,
+ *          cymbal + haptic, old-hammer after-image lingers; persist happens here.
+ *  Beat 3: practice swing lands as a real strike on the empty bench: confetti +
+ *          crash + light shake, next level's first plaque drops & auto-plays.
  */
-export function LevelTransition({ fromStage, toStage, onDone }: Props) {
-  const [beat, setBeat] = useState(0);
+export function LevelTransition({
+  fromStage, toStage, earned, playWord, onPersist, onStartNext, onDone,
+}: Props) {
+  const [beat, setBeat] = useState<Beat>(1);
+  const [flashKey, setFlashKey] = useState(0);
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const persisted = useRef(false);
+  const startedNext = useRef(false);
+  const finished = useRef(false);
+
+  const recapMs = Math.max(1500, earned.length * 700 + 400);
+
+  const goPersist = () => { if (!persisted.current) { persisted.current = true; onPersist(); } };
+  const goNext = () => { if (!startedNext.current) { startedNext.current = true; onStartNext(); } };
+  const goDone = () => { if (!finished.current) { finished.current = true; onDone(); } };
 
   useEffect(() => {
-    const t1 = setTimeout(() => {
-      setBeat(1);
-      playFoley('hammerEvolve');
-    }, 1600);
-    const t2 = setTimeout(() => {
+    const T = timers.current;
+    const add = (fn: () => void, ms: number) => { T.push(setTimeout(fn, ms)); };
+
+    // Beat 1 — recap
+    playFoley('fanfare');
+    earned.forEach((p, i) => add(() => playWord(p.wordId), i * 700));
+
+    // Beat 2 — transformation
+    add(() => {
       setBeat(2);
-      playFoley('confetti');
-    }, 3800);
-    const t3 = setTimeout(() => onDone(), 6000);
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-    };
+      goPersist();
+      playFoley('cymbal');
+      try { navigator.vibrate?.(30); } catch { /* ignore */ }
+    }, recapMs);
+    add(() => setFlashKey((k) => k + 1), recapMs + 800); // white flash at stage swap
+
+    // Beat 3 — confetti smash + next level drop (overlap)
+    add(() => { setBeat(3); goNext(); }, recapMs + 2500);
+    add(() => goDone(), recapMs + 4500);
+
+    return () => { T.forEach(clearTimeout); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const shownStage = beat >= 1 ? toStage : fromStage;
+  // §8: tap-to-skip is only offered AFTER beat 1 (the recap must play in full);
+  // a tap during beat 2/3 fast-forwards the remaining beats to completion.
+  function skip() {
+    if (beat >= 2) {
+      timers.current.forEach(clearTimeout);
+      timers.current = [];
+      goPersist();
+      goNext();
+      goDone();
+    }
+  }
+
+  const shownStage = beat >= 2 ? toStage : fromStage;
   const recipe = HAMMER_STAGES[Math.max(0, Math.min(HAMMER_STAGES.length - 1, shownStage))];
+  const oldRecipe = HAMMER_STAGES[Math.max(0, Math.min(HAMMER_STAGES.length - 1, fromStage))];
+
+  // hammer position: docked in beat 1, center stage in beat 2/3
+  const centerX = STAGE_W / 2;
+  const centerY = STAGE_H * 0.42;
+  const hammerX = beat === 1 ? HAMMER_DOCK.x : centerX;
+  const hammerY = beat === 1 ? HAMMER_DOCK.y : centerY;
 
   return (
-    <div style={{ position: 'absolute', inset: 0, zIndex: 940, pointerEvents: 'none' }}>
-      {/* warm vignette pulse */}
+    <div
+      onPointerDown={skip}
+      style={{ position: 'absolute', inset: 0, zIndex: 940, pointerEvents: beat >= 2 ? 'auto' : 'none' }}
+    >
+      {/* world dim: warm during beat1, deeper spotlight during beat2 */}
       <div
         className="ws-fade-in"
         style={{
           position: 'absolute',
           inset: 0,
-          background: 'radial-gradient(120% 90% at 50% 40%, rgba(255,244,214,.35), transparent 70%)',
+          background:
+            beat >= 2
+              ? 'radial-gradient(60% 60% at 50% 42%, rgba(255,244,214,.28) 0%, rgba(30,18,6,.28) 70%)'
+              : 'radial-gradient(120% 90% at 50% 40%, rgba(255,244,214,.35), transparent 70%)',
         }}
       />
-      {/* hammer flourish at dock */}
+
+      {/* Beat 1 — earned plaques bow left→right, playing back-to-back */}
+      {beat === 1 && earned.map((p, i) => {
+        const finish = finishForPlayCount(p.playCount);
+        return (
+          <div
+            key={p.wordId}
+            className="ws-plaque-bow"
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              width: WALL_PLAQUE_W,
+              height: WALL_PLAQUE_H,
+              ['--bx' as string]: `${p.x - WALL_PLAQUE_W / 2}px`,
+              ['--by' as string]: `${p.y - WALL_PLAQUE_H / 2}px`,
+              animationDelay: `${i * 0.1}s`,
+              zIndex: 30,
+            }}
+          >
+            <PlaqueFace
+              w={WALL_PLAQUE_W}
+              h={WALL_PLAQUE_H}
+              text={p.display}
+              faceA={finish.faceA}
+              faceB={finish.faceB}
+              band={finish.band}
+              ink={finish.ink}
+              goldFace={finish.goldFace}
+              fontScale={0.85}
+              style={{ position: 'relative' }}
+            />
+          </div>
+        );
+      })}
+
+      {/* old-hammer after-image lingering at center as the new one lands (beat2) */}
+      {beat === 2 && (
+        <div
+          className="ws-afterimage"
+          style={{
+            position: 'absolute',
+            left: centerX - oldRecipe.size / 2,
+            top: centerY - oldRecipe.size / 2,
+            width: oldRecipe.size,
+            height: oldRecipe.size * (160 / 120),
+            pointerEvents: 'none',
+          }}
+        >
+          <FlourishHammer recipe={oldRecipe} />
+        </div>
+      )}
+
+      {/* the hammer itself */}
       <div
+        className={beat === 1 ? 'ws-hammer-shiver' : beat === 2 ? 'ws-hammer-spin' : undefined}
         style={{
           position: 'absolute',
-          left: HAMMER_DOCK.x - recipe.size / 2,
-          top: HAMMER_DOCK.y - recipe.size,
+          left: hammerX - recipe.size / 2,
+          top: hammerY - recipe.size / 2,
           width: recipe.size,
           height: recipe.size * (160 / 120),
-          transition: 'all 0.5s cubic-bezier(.34,1.56,.64,1)',
-          transform: beat === 1 ? 'scale(1.25) rotate(-8deg)' : 'scale(1)',
-          filter: beat === 1 ? 'drop-shadow(0 0 24px rgba(224,161,60,.9))' : 'drop-shadow(0 8px 12px rgba(90,55,20,.35))',
+          filter:
+            beat >= 2
+              ? 'drop-shadow(0 0 24px rgba(224,161,60,.9))'
+              : 'drop-shadow(0 6px 10px rgba(90,55,20,.35))',
+          transition: 'left 0.5s ease, top 0.5s ease',
         }}
       >
         <FlourishHammer recipe={recipe} />
       </div>
-      {/* radiating glints during transform */}
-      {beat === 1 && (
+
+      {/* white flash at the moment of transformation */}
+      {beat === 2 && flashKey > 0 && <div key={flashKey} className="ws-white-flash" />}
+
+      {/* Beat 3 — confetti burst over the empty bench */}
+      {beat === 3 && <Confetti seed={toStage * 97 + 13} />}
+
+      {/* draw a strike burst at the bench when the confetti smash lands */}
+      {beat === 3 && (
         <div
           className="ws-burst"
-          style={{ left: HAMMER_DOCK.x, top: HAMMER_DOCK.y - recipe.size * 0.5, width: 120, height: 120, border: `6px solid ${C.gold}` }}
+          style={{ left: TRAY_CENTER.x, top: TRAY_CENTER.y, width: 120, height: 120, border: `6px solid ${C.flashB}` }}
         />
       )}
-      {beat >= 2 && <Confetti seed={toStage * 97 + 13} />}
-      {/* subtle bunting sway hint during beat 0 handled by bg; nothing else drawn */}
-      <div style={{ position: 'absolute', left: 0, top: 0, width: STAGE_W, height: 1 }} />
     </div>
   );
 }

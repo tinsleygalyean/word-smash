@@ -6,22 +6,24 @@ interface Props {
   slots: SlotState[];
   ghost: boolean;               // ghost level → outline letters in recesses
   hintSlotIndex: number | null; // pulse this recess
+  playingSlotIndex: number | null; // §4: this slot's ghost play button is speaking
   onSlotPlay: (index: number) => void;
 }
 
 /** Routed recesses in the bench that receive the scattered pieces. */
-export function Tray({ slots, ghost, hintSlotIndex, onSlotPlay }: Props) {
+export function Tray({ slots, ghost, hintSlotIndex, playingSlotIndex, onSlotPlay }: Props) {
   return (
     <>
       {slots.map((slot) => {
         const cs = colorSet(unitColorId(slot.index));
         const left = slot.x - slot.w / 2;
         const top = slot.y - PIECE_H / 2;
+        const playing = playingSlotIndex === slot.index;
         return (
           <div key={slot.index}>
             {/* sunken recess */}
             <div
-              className={hintSlotIndex === slot.index && !ghost ? undefined : undefined}
+              className={playing && !ghost ? 'ws-recess-pulse' : undefined}
               style={{
                 position: 'absolute',
                 left,
@@ -66,7 +68,7 @@ export function Tray({ slots, ghost, hintSlotIndex, onSlotPlay }: Props) {
                 <span
                   style={{
                     fontFamily: "'Fredoka', system-ui, sans-serif",
-                    fontWeight: 700,
+                    fontWeight: 600,
                     fontSize: Math.round(PIECE_H * 0.5),
                     letterSpacing: '0.04em',
                     color: 'transparent',
@@ -85,6 +87,7 @@ export function Tray({ slots, ghost, hintSlotIndex, onSlotPlay }: Props) {
                 y={slot.y}
                 color={cs.band}
                 pulse={hintSlotIndex === slot.index}
+                playing={playing}
                 onPlay={() => onSlotPlay(slot.index)}
               />
             )}

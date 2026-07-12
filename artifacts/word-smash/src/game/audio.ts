@@ -202,12 +202,75 @@ export function playCrash(): void {
 }
 
 export function playFoley(
-  type: 'smash' | 'snap' | 'kick' | 'celebrate' | 'hammerEvolve' | 'whoosh' | 'thunk' | 'chime' | 'confetti',
+  type:
+    | 'smash' | 'snap' | 'kick' | 'celebrate' | 'hammerEvolve' | 'whoosh'
+    | 'thunk' | 'chime' | 'confetti' | 'fanfare' | 'cymbal' | 'woodTap',
 ): void {
   const ctx = getAudioContext();
   const now = ctx.currentTime;
 
   switch (type) {
+    case 'fanfare': {
+      // rising brass-like recap fanfare for level-end beat 1
+      const notes = [392, 523.25, 659.25, 783.99, 1046.5];
+      notes.forEach((f, i) => {
+        const t = now + i * 0.14;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.value = f;
+        const lp = ctx.createBiquadFilter();
+        lp.type = 'lowpass';
+        lp.frequency.value = 2200;
+        gain.gain.setValueAtTime(0.0001, t);
+        gain.gain.exponentialRampToValueAtTime(0.22, t + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.34);
+        osc.connect(lp);
+        lp.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.36);
+      });
+      break;
+    }
+    case 'cymbal': {
+      // shimmering cymbal for the hammer transform (beat 2)
+      const dur = 0.9;
+      const noise = ctx.createBuffer(1, Math.floor(ctx.sampleRate * dur), ctx.sampleRate);
+      const data = noise.getChannelData(0);
+      for (let i = 0; i < data.length; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 1.2);
+      }
+      const src = ctx.createBufferSource();
+      src.buffer = noise;
+      const hp = ctx.createBiquadFilter();
+      hp.type = 'highpass';
+      hp.frequency.value = 6000;
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.32, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+      src.connect(hp);
+      hp.connect(gain);
+      gain.connect(ctx.destination);
+      src.start(now);
+      break;
+    }
+    case 'woodTap': {
+      // dry woody knock when a plaque lands on the wall
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(420, now);
+      osc.frequency.exponentialRampToValueAtTime(180, now + 0.06);
+      gain.gain.setValueAtTime(0.4, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.11);
+      break;
+    }
     case 'smash': {
       const noise = ctx.createBuffer(1, ctx.sampleRate * 0.15, ctx.sampleRate);
       const data = noise.getChannelData(0);

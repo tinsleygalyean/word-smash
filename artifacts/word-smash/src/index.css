@@ -10,6 +10,7 @@ html, body, #root {
   overflow: hidden;
   background: #d7b47e;
   font-family: 'Fredoka', 'Nunito', system-ui, sans-serif;
+  font-weight: 600;
 }
 
 /* ===== LOADING ===== */
@@ -193,3 +194,68 @@ html, body, #root {
 @keyframes ws-fade-in { from { opacity: 0; } to { opacity: 1; } }
 .ws-fade-in { animation: ws-fade-in 0.4s ease both; }
 @keyframes ws-fade-out { from { opacity: 1; } to { opacity: 0; } }
+
+/* amber sound rings (auto-play / listen affordance) §3 */
+@keyframes ws-ring {
+  0% { transform: translate(-50%,-50%) scale(0.3); opacity: 0.7; }
+  100% { transform: translate(-50%,-50%) scale(1.9); opacity: 0; }
+}
+.ws-ring { position: absolute; border-radius: 50%; animation: ws-ring 1s ease-out both; pointer-events: none; }
+
+/* no-ghost slot play button pulse §4 */
+@keyframes ws-playbtn-pulse {
+  0%, 100% { transform: translate(-50%,-50%) scale(1); }
+  50% { transform: translate(-50%,-50%) scale(1.16); }
+}
+.ws-playbtn-pulse { animation: ws-playbtn-pulse 0.6s ease-in-out infinite; }
+
+/* recess pulse while its play button speaks §4 */
+@keyframes ws-recess-pulse {
+  0%, 100% { box-shadow: inset 0 4px 8px rgba(90,55,20,.35), inset 0 -2px 2px rgba(255,255,255,.18); }
+  50% { box-shadow: inset 0 4px 8px rgba(90,55,20,.35), 0 0 16px rgba(224,161,60,.6), inset 0 0 0 3px rgba(224,161,60,.7); }
+}
+.ws-recess-pulse { animation: ws-recess-pulse 0.6s ease-in-out infinite; }
+
+/* wind-up world vignette dim §2/§3 */
+@keyframes ws-vignette-in { from { opacity: 0; } to { opacity: 1; } }
+.ws-vignette {
+  position: absolute; inset: 0; pointer-events: none; z-index: 800;
+  background: radial-gradient(120% 90% at 50% 42%, transparent 30%, rgba(30,18,6,.5) 100%);
+  animation: ws-vignette-in 0.5s ease both;
+}
+
+/* level transition: earned plaque bow §8 beat1 */
+@keyframes ws-plaque-bow {
+  0% { transform: translate(var(--bx), var(--by)) rotate(0deg); }
+  30% { transform: translate(var(--bx), calc(var(--by) - 8px)) rotate(-8deg); }
+  60% { transform: translate(var(--bx), calc(var(--by) - 8px)) rotate(8deg); }
+  100% { transform: translate(var(--bx), var(--by)) rotate(0deg); }
+}
+.ws-plaque-bow { animation: ws-plaque-bow 0.7s ease-in-out both; }
+
+/* hammer anticipation shiver §8 beat1 */
+@keyframes ws-hammer-shiver {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-3deg); }
+  75% { transform: rotate(3deg); }
+}
+.ws-hammer-shiver { animation: ws-hammer-shiver 0.14s linear infinite; transform-origin: 50% 90%; }
+
+/* hammer transform spin §8 beat2 */
+@keyframes ws-hammer-spin {
+  0% { transform: rotate(0deg) scale(1); }
+  100% { transform: rotate(720deg) scale(1.15); }
+}
+.ws-hammer-spin { animation: ws-hammer-spin 0.9s cubic-bezier(.55,0,.9,.6) both; transform-origin: 50% 50%; }
+
+/* white flash §8 beat2 */
+@keyframes ws-white-flash { 0% { opacity: 0.9; } 100% { opacity: 0; } }
+.ws-white-flash { position: absolute; inset: 0; background: #fff; pointer-events: none; animation: ws-white-flash 0.12s ease-out both; }
+
+/* old-hammer after-image dissolve §8 beat2 */
+@keyframes ws-afterimage { 0% { opacity: 0.5; transform: scale(1); } 100% { opacity: 0; transform: scale(1.3); } }
+.ws-afterimage { animation: ws-afterimage 0.4s ease-out both; }
+
+/* tutorial hand dust dissolve §9 */
+@keyframes ws-dust { 0% { opacity: 0.9; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-30px) scale(0.4); } }
+.ws-dust { animation: ws-dust 0.3s ease-out both; }

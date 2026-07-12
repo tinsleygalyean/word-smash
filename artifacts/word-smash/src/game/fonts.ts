@@ -22,8 +22,8 @@ function loadBinary(url: string): Promise<ArrayBuffer> {
 export async function loadFonts(): Promise<void> {
   try {
     const base = import.meta.env.BASE_URL;
-    const buf = await loadBinary(`${base}fonts/fredoka-one.woff2`);
-    const face = new FontFace('Fredoka', buf, { weight: '400 700' });
+    const buf = await loadBinary(`${base}fonts/fredoka-600.woff2`);
+    const face = new FontFace('Fredoka', buf, { weight: '600' });
     await face.load();
     document.fonts.add(face);
   } catch (err) {

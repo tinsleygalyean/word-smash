@@ -54,14 +54,15 @@ export interface WordCompletion {
 }
 
 export interface PlaqueState {
-  plaqueId: string;  // stable per-instance id (a word can recur across levels)
+  plaqueId: string;  // stable per-instance id (ONE plaque per wordId — §6)
   wordId: string;
   display: string;
   units: string[];
   x: number;         // wall-zone reference coords (center)
   y: number;
   zOrder: number;
-  playCount: number;
+  playCount: number;    // cumulative across ghost/no-ghost/replays — §6
+  highestLevel: number; // highest level ever reached for this word (drives replay) — §6
 }
 
 export type GamePhase =

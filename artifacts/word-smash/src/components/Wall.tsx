@@ -7,6 +7,7 @@ import { PlaqueFace } from './PlaqueFace';
 interface Props {
   plaques: PlaqueState[];
   stageRef: RefObject<HTMLDivElement | null>;
+  onPlay: (wordId: string) => void;
   onReplay: (plaqueId: string, wordId: string) => void;
   onMove: (plaqueId: string, x: number, y: number) => void;
   onBringFront: (plaqueId: string) => void;
@@ -17,7 +18,7 @@ const WALL_PLAQUE_H = Math.round(PIECE_H * 0.62);
 
 /** The trophy wall of completed words. Draggable, stackable; drag a plaque
  * down toward the bench to replay its word. §6 */
-export function Wall({ plaques, stageRef, onReplay, onMove, onBringFront }: Props) {
+export function Wall({ plaques, stageRef, onPlay, onReplay, onMove, onBringFront }: Props) {
   return (
     <>
       {plaques.map((p) => (
@@ -25,6 +26,7 @@ export function Wall({ plaques, stageRef, onReplay, onMove, onBringFront }: Prop
           key={p.plaqueId}
           plaque={p}
           stageRef={stageRef}
+          onPlay={onPlay}
           onReplay={onReplay}
           onMove={onMove}
           onBringFront={onBringFront}
@@ -35,10 +37,11 @@ export function Wall({ plaques, stageRef, onReplay, onMove, onBringFront }: Prop
 }
 
 function WallPlaque({
-  plaque, stageRef, onReplay, onMove, onBringFront,
+  plaque, stageRef, onPlay, onReplay, onMove, onBringFront,
 }: {
   plaque: PlaqueState;
   stageRef: RefObject<HTMLDivElement | null>;
+  onPlay: (wordId: string) => void;
   onReplay: (plaqueId: string, wordId: string) => void;
   onMove: (plaqueId: string, x: number, y: number) => void;
   onBringFront: (plaqueId: string) => void;
@@ -84,7 +87,7 @@ function WallPlaque({
       setPos(np);
       onMove(plaque.plaqueId, np.x, np.y);
     } else {
-      onReplay(plaque.plaqueId, plaque.wordId); // tap = play
+      onPlay(plaque.wordId); // tap = hear the word (no replay session)
       setPos(start.current);
     }
   }

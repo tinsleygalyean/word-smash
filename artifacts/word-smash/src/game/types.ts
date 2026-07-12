@@ -63,6 +63,7 @@ export interface PlaqueState {
   zOrder: number;
   playCount: number;    // cumulative across ghost/no-ghost/replays — §6
   highestLevel: number; // highest level ever reached for this word (drives replay) — §6
+  levelsPlayed: number; // distinct levels completed for this word — drives the plaque finish (replays do NOT advance it)
 }
 
 export type GamePhase =

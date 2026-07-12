@@ -1,6 +1,6 @@
 import { useRef, useState, type RefObject } from 'react';
 import type { PlaqueState } from '../game/types';
-import { PIECE_H, WALL_H, finishForPlayCount } from '../game/design';
+import { PIECE_H, WALL_H, finishForLevelCount } from '../game/design';
 import { screenToStage } from '../game/coords';
 import { PlaqueFace } from './PlaqueFace';
 
@@ -51,7 +51,7 @@ function WallPlaque({
   const draggingRef = useRef(false);
   const grab = useRef({ dx: 0, dy: 0 });
   const start = useRef({ x: plaque.x, y: plaque.y });
-  const finish = finishForPlayCount(plaque.playCount);
+  const finish = finishForLevelCount(plaque.levelsPlayed);
 
   function down(e: React.PointerEvent) {
     e.preventDefault();

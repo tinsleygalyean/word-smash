@@ -560,6 +560,10 @@ export function GameScene({ langPack, lang }: Props) {
     const existingPlaque = st.plaques.find((p) => p.wordId === word.id);
     const playCount = (existingPlaque?.playCount ?? 0) + 1;
     const highestLevel = Math.max(existingPlaque?.highestLevel ?? 0, level);
+    // Plaque finish advances only when the word is completed at a NEW level
+    // (never on wall replays, which run at an already-completed level).
+    const isNewLevel = !existingComp;
+    const levelsPlayed = Math.max(1, (existingPlaque?.levelsPlayed ?? 0) + (isNewLevel ? 1 : 0));
 
     const completion: WordCompletion = {
       wordId: word.id,
@@ -594,13 +598,13 @@ export function GameScene({ langPack, lang }: Props) {
       let plaques: PlaqueState[];
       if (existingPlaque) {
         plaques = st.plaques.map((p) => (p.wordId === word.id
-          ? { ...p, playCount, highestLevel, display: word.display, units: word.units, zOrder: maxZ + 1 }
+          ? { ...p, playCount, highestLevel, levelsPlayed, display: word.display, units: word.units, zOrder: maxZ + 1 }
           : p));
       } else {
         const plaque: PlaqueState = {
           plaqueId: `plq-${word.id}`,
           wordId: word.id, display: word.display, units: word.units,
-          x: wallPos.x, y: wallPos.y, zOrder: st.plaques.length, playCount, highestLevel,
+          x: wallPos.x, y: wallPos.y, zOrder: st.plaques.length, playCount, highestLevel, levelsPlayed,
         };
         plaques = [...st.plaques, plaque];
       }
@@ -782,7 +786,7 @@ export function GameScene({ langPack, lang }: Props) {
     ? state.transition.earnedWordIds
         .map((id) => state.plaques.find((p) => p.wordId === id))
         .filter((p): p is PlaqueState => !!p)
-        .map((p) => ({ wordId: p.wordId, display: p.display, x: p.x, y: p.y, playCount: p.playCount }))
+        .map((p) => ({ wordId: p.wordId, display: p.display, x: p.x, y: p.y, levelsPlayed: p.levelsPlayed }))
     : [];
 
   const showDemo = !!demo && (

@@ -107,8 +107,10 @@ export function colorSet(id: ColorId): ColorSet {
 }
 
 // ---------------------------------------------------------------------------
-// Plaque wall play-count finish — §6
-// 1× red · 2× teal · 3× gold · 4×+ gold-on-gold
+// Plaque wall finish — advances by DISTINCT levels completed for the word.
+// Replaying a word from the wall does NOT advance the finish; only completing
+// it at a new level does.
+// 1 level red · 2 teal · 3 gold · 4+ gold-on-gold
 // ---------------------------------------------------------------------------
 export interface Finish {
   faceA: string;
@@ -117,7 +119,7 @@ export interface Finish {
   ink: string;
   goldFace: boolean;
 }
-export function finishForPlayCount(n: number): Finish {
+export function finishForLevelCount(n: number): Finish {
   if (n >= 4) {
     return { faceA: C.goldFaceA, faceB: C.goldFaceB, band: C.gold, ink: C.goldFaceInk, goldFace: true };
   }

@@ -82,8 +82,6 @@ html, body, #root {
   overflow: hidden;
 }
 
-/* bunting pennants */
-.ws-pennant { position: absolute; top: 0; }
 
 /* ===== PLAQUE / PIECE FACE ===== */
 .ws-face {

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   HAMMER_STAGES, HAMMER_DOCK, STAGE_W, STAGE_H, TRAY_CENTER, PIECE_H, C,
-  finishForPlayCount, type HammerStage,
+  finishForLevelCount, type HammerStage,
 } from '../game/design';
 import { Confetti } from './Effects';
 import { PlaqueFace } from './PlaqueFace';
@@ -12,7 +12,7 @@ export interface EarnedPlaque {
   display: string;
   x: number;
   y: number;
-  playCount: number;
+  levelsPlayed: number;
 }
 
 interface Props {
@@ -122,7 +122,7 @@ export function LevelTransition({
 
       {/* Beat 1 — earned plaques bow left→right, playing back-to-back */}
       {beat === 1 && earned.map((p, i) => {
-        const finish = finishForPlayCount(p.playCount);
+        const finish = finishForLevelCount(p.levelsPlayed);
         return (
           <div
             key={p.wordId}

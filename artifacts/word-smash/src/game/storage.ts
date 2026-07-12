@@ -21,9 +21,11 @@ export interface Progress {
  */
 function deriveFromCompletions(
   completions: Record<string, WordCompletion>,
-): { level: Map<string, number>; play: Map<string, number> } {
+): { level: Map<string, number>; play: Map<string, number>; levelsPlayed: Map<string, number> } {
   const level = new Map<string, number>();
   const play = new Map<string, number>();
+  // distinct levels completed per word — each completion key is `${wordId}_L${level}`
+  const seenLevels = new Map<string, Set<number>>();
   for (const [k, c] of Object.entries(completions ?? {})) {
     if (!c || !c.wordId) continue;
     const wid = c.wordId;
@@ -32,8 +34,15 @@ function deriveFromCompletions(
     const lvl = Math.max(c.highestLevel ?? 0, parsedLvl || 0);
     level.set(wid, Math.max(level.get(wid) ?? 0, lvl));
     play.set(wid, Math.max(play.get(wid) ?? 0, c.playCount ?? 0));
+    if (parsedLvl) {
+      const set = seenLevels.get(wid) ?? new Set<number>();
+      set.add(parsedLvl);
+      seenLevels.set(wid, set);
+    }
   }
-  return { level, play };
+  const levelsPlayed = new Map<string, number>();
+  for (const [wid, set] of seenLevels) levelsPlayed.set(wid, set.size);
+  return { level, play, levelsPlayed };
 }
 
 /**
@@ -49,7 +58,7 @@ function dedupePlaques(
   raw: unknown[],
   completions: Record<string, WordCompletion>,
 ): PlaqueState[] {
-  const { level: derivedLevel, play: derivedPlay } = deriveFromCompletions(completions);
+  const { level: derivedLevel, play: derivedPlay, levelsPlayed: derivedLevelsPlayed } = deriveFromCompletions(completions);
   const byWord = new Map<string, PlaqueState>();
   (raw as PlaqueState[]).forEach((p, i) => {
     if (!p || !p.wordId) return;
@@ -64,6 +73,7 @@ function dedupePlaques(
       zOrder: p.zOrder ?? i,
       playCount: p.playCount ?? 0,
       highestLevel: p.highestLevel ?? 0,
+      levelsPlayed: p.levelsPlayed ?? 0,
     };
     if (!existing) {
       byWord.set(p.wordId, normalized);
@@ -79,6 +89,7 @@ function dedupePlaques(
         // schema, so max (not sum) is correct and avoids double counting.
         playCount: Math.max(existing.playCount, normalized.playCount),
         highestLevel: Math.max(existing.highestLevel, normalized.highestLevel),
+        levelsPlayed: Math.max(existing.levelsPlayed, normalized.levelsPlayed),
       });
     }
   });
@@ -88,6 +99,7 @@ function dedupePlaques(
       ...plaque,
       playCount: Math.max(plaque.playCount, derivedPlay.get(wid) ?? 0, 1),
       highestLevel: Math.max(plaque.highestLevel, derivedLevel.get(wid) ?? 0, 1),
+      levelsPlayed: Math.max(plaque.levelsPlayed, derivedLevelsPlayed.get(wid) ?? 0, 1),
     });
   }
   return Array.from(byWord.values());

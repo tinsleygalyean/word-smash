@@ -17,11 +17,25 @@ layout could not reproduce it faithfully. Keep new geometry in reference coords.
 ## Plaque identity — ONE plaque per wordId (§6)
 The English pack repeats ~24 word IDs across levels (ghost vs no-ghost variants).
 Per DESIGN-SPEC §6 the wall shows exactly ONE plaque per `wordId`; that plaque
-carries a stable `plaqueId`, a cumulative `playCount`, and `highestLevel` (the
-highest level ever reached, which drives replay). Wall drag/replay/reorder still
-target `plaqueId`, never index. Completions are keyed `${wordId}_L${level}`.
+carries a stable `plaqueId`, a cumulative `playCount`, `highestLevel` (the
+highest level ever reached, which drives replay), and `levelsPlayed`. Wall
+drag/replay/reorder still target `plaqueId`, never index. Completions are keyed
+`${wordId}_L${level}`.
 **Why:** an earlier design allowed multiple plaques per word; the redesign
 collapsed them.
+
+## Plaque finish advances by DISTINCT levels, NOT play count
+The plaque colour finish (1 level red · 2 teal · 3 gold · 4+ gold-face) is driven
+by `levelsPlayed` (distinct levels completed for the word), NOT cumulative
+`playCount`. `finishForLevelCount(levelsPlayed)` is the only finish function.
+New-level detection: on completion `isNewLevel = !existingComp` (existingComp is
+the `${wordId}_L${level}` completion key); increment `levelsPlayed` only when true.
+Replays run at `highestLevel`, which already has a completion key, so they never
+advance the finish. Migration derives `levelsPlayed` = count of distinct
+completion keys per word (`deriveFromCompletions` seenLevels set).
+**Why:** product decision — dragging a wall plaque down to replay must NOT change
+its colour; only reaching a genuinely new level should. `playCount` is still
+tracked (analytics / cr_event) but must never drive the finish again.
 
 ## localStorage migration must use completions as source of truth
 `storage.ts dedupePlaques(raw, completions)` collapses legacy multi-plaque saves.

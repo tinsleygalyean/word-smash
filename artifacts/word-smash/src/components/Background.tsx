@@ -1,7 +1,6 @@
 import { STAGE_W, STAGE_H, WALL_H, C, HAMMER_DOCK } from '../game/design';
 
 const PLANK_XS = [180, 360, 560, 760, 960, 1120];
-const PENNANT_COLORS = [C.red, C.teal, C.gold, C.teal, C.red, C.gold, C.teal, C.red];
 
 /** Static workshop backdrop: plank wall + shelf edge + workbench top. */
 export function Background() {
@@ -42,39 +41,6 @@ export function Background() {
             }}
           />
         ))}
-        {/* bunting */}
-        <div style={{ position: 'absolute', left: 0, right: 0, top: 8, height: 40 }}>
-          <div
-            style={{
-              position: 'absolute',
-              left: 40,
-              right: 40,
-              top: 6,
-              height: 2,
-              background: 'rgba(120,80,40,.35)',
-              borderRadius: 2,
-            }}
-          />
-          {PENNANT_COLORS.map((col, i) => {
-            const x = 90 + i * ((STAGE_W - 180) / (PENNANT_COLORS.length - 1));
-            return (
-              <div
-                key={i}
-                className="ws-pennant"
-                style={{
-                  left: x - 17,
-                  top: 8,
-                  width: 0,
-                  height: 0,
-                  borderLeft: '17px solid transparent',
-                  borderRight: '17px solid transparent',
-                  borderTop: `26px solid ${col}`,
-                  filter: 'drop-shadow(0 2px 2px rgba(90,55,20,.25))',
-                }}
-              />
-            );
-          })}
-        </div>
       </div>
 
       {/* BENCH zone */}

@@ -14,14 +14,23 @@ component takes `stageRef`.
 **Why:** the design contract is pixel-authored art direction; percentage/flex
 layout could not reproduce it faithfully. Keep new geometry in reference coords.
 
-## Plaque identity — a word can recur across levels
-The English pack repeats ~24 word IDs across levels (ghost vs no-ghost variants),
-so the SAME `wordId` can legitimately appear on the wall more than once. Wall
-plaques therefore carry a stable `plaqueId`; all wall drag/replay/reorder/
-play-count operations must target `plaqueId`, NOT `wordId`. Keying wall behaviour
-by `wordId` mutates multiple plaques at once.
-**Why:** a code review caught this exact bug. Also completions are keyed
-`${wordId}_L${level}` for the same reason.
+## Plaque identity — ONE plaque per wordId (§6)
+The English pack repeats ~24 word IDs across levels (ghost vs no-ghost variants).
+Per DESIGN-SPEC §6 the wall shows exactly ONE plaque per `wordId`; that plaque
+carries a stable `plaqueId`, a cumulative `playCount`, and `highestLevel` (the
+highest level ever reached, which drives replay). Wall drag/replay/reorder still
+target `plaqueId`, never index. Completions are keyed `${wordId}_L${level}`.
+**Why:** an earlier design allowed multiple plaques per word; the redesign
+collapsed them.
+
+## localStorage migration must use completions as source of truth
+`storage.ts dedupePlaques(raw, completions)` collapses legacy multi-plaque saves.
+Legacy plaques predate `highestLevel`/`playCount`, so defaulting them to 1 runs
+replays at the WRONG level. Always derive from the completions record: take
+`max(comp.highestLevel, level parsed from the "_L<n>" key)` and
+`max(comp.playCount)` per word. Dedup uses max (not sum) to avoid double counting.
+**Why:** defaulting legacy plaques' `highestLevel` to 1 sends returning players'
+replays back to level 1 — completions are the only reliable source of true level.
 
 ## Hard offline constraints (Curious Reader file:// WebView)
 No `fetch()`, no `<audio>`, no CDN. All binaries (JSON, WOFF2, MP3) load via

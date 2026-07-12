@@ -686,6 +686,7 @@ export function GameScene({ langPack, lang }: Props) {
   function startReplay(plaqueId: string, wordId: string) {
     const st = stateRef.current;
     if (st.replay) return; // already replaying
+    if (st.phase === 'levelComplete') return; // no wall input during the transition
     const plaque = st.plaques.find((p) => p.plaqueId === plaqueId);
     const level = plaque?.highestLevel ?? st.currentLevel;
     const levelData = getLevelData(level) ?? st.currentLevelData;

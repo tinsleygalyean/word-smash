@@ -105,7 +105,7 @@ export function LevelTransition({
   return (
     <div
       onPointerDown={skip}
-      style={{ position: 'absolute', inset: 0, zIndex: 940, pointerEvents: beat >= 2 ? 'auto' : 'none' }}
+      style={{ position: 'absolute', inset: 0, zIndex: 940, pointerEvents: 'auto' }}
     >
       {/* world dim: warm during beat1, deeper spotlight during beat2 */}
       <div

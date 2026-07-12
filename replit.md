@@ -39,6 +39,8 @@ M1 (complete): English levels 1–4 playable — ghost-letter and no-ghost word 
 
 M2 (complete): Phoneme-sound TTS (says /b/ "buh", never letter names), level indicator fix, self-hosted WOFF2 font via FontFace ArrayBuffer, `vite.standalone.config.ts` (`build:standalone` → `dist/standalone/`, base `./`) for the offline APK bundle, levels 5–10 playable.
 
+Redesign ("Honey & Paint", complete): Full visual + interaction redesign to the approved contract in `attached_assets/word_smash_design/handoff/DESIGN-SPEC.md`. Fixed 1200×540 reference canvas, cover-scaled to the device; all geometry in reference coords. No text/emoji/mascot in gameplay. Phases: loading→present→windup→rebuild→complete→levelComplete. 10-stage hammer evolution, plaque wall with drag-to-replay and replay-count finishes.
+
 M3 (planned): Real recorded MP3 audio (ElevenLabs or voice talent) — MUST be phoneme sounds, never letter names.
 
 ## User preferences

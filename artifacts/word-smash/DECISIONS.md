@@ -120,3 +120,48 @@ purple). Stage is persisted in localStorage so it survives session reloads.
 `Fredoka One` is loaded via Google Fonts `@import` at dev time. For M2 offline, it
 must be bundled as a self-hosted WOFF2 loaded via `FontFace` from an ArrayBuffer
 (same loadBinary XHR pattern) — Google Fonts CDN is unavailable offline.
+
+---
+
+## Redesign — "Honey & Paint" (2026-07)
+
+Full visual + interaction redesign to the approved design contract in
+`attached_assets/word_smash_design/handoff/DESIGN-SPEC.md`. No text, emoji, or
+mascot appears in gameplay (the old "Level N" indicator was removed).
+
+### Reference-canvas architecture
+
+All geometry is authored in a fixed **1200×540 reference canvas** (`STAGE_W`/
+`STAGE_H` in `src/game/design.ts`). The `.ws-stage` element is COVER-scaled
+(`--ws-scale = max(vw/1200, vh/540)`), so 16:9 devices crop exactly to the 16:9
+safe area (120px side margins). Pointer coordinates are converted back to
+reference space via `screenToStage()` in `src/game/coords.ts`. Every component
+takes `stageRef` for this conversion. This replaced the old percentage/flex
+layout so the art director's pixel geometry maps 1:1.
+
+### Phases
+
+`loading → present → windup → rebuild → complete → levelComplete`. State lives in
+a single `useReducer` in `GameScene.tsx`; multi-step animation sequencing (smash
+scatter, word-complete fuse/hop/flight-to-wall, level transition) is driven
+imperatively via `setTimeout` in handlers, never in the reducer.
+
+### Plaque identity
+
+Wall plaques carry a stable `plaqueId` (not `wordId`) because a word can recur
+across levels (ghost vs no-ghost), so the same `wordId` can legitimately appear
+on the wall more than once. All wall drag/replay/reorder/play-count operations
+target `plaqueId`. Old localStorage plaques are migrated with a synthesised id.
+
+### Hammer evolution (updated)
+
+Now 10 stages (`HAMMER_STAGES` recipes), advancing per level via
+`hammerStageForLevel()`. Wall plaque finish upgrades by replay count
+(1×red / 2×teal / 3×gold / 4+×gold-face) via `finishForPlayCount()`.
+
+### Font loading (updated)
+
+`Fredoka` is loaded offline via `FontFace` from an ArrayBuffer using the
+`loadBinary()` XHR pattern (`src/game/fonts.ts`), from
+`${BASE_URL}fonts/fredoka-one.woff2`. The full-glyph `fredoka-one.woff2` is the
+only bundled face (an earlier weight-600 subset had incomplete glyph coverage).

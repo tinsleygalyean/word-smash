@@ -1,1 +1,1 @@
-- [Word Smash M1 constraints](word-smash-m1.md) — offline file:// XHR-only asset loading, TTS fallback audio, all decisions documented in DECISIONS.md
+- [Word Smash redesign](word-smash-redesign.md) — reference-canvas (1200×540 cover-scaled) layout, plaque identity by plaqueId not wordId, file:// offline rules, no-text-in-gameplay.

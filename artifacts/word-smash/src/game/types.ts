@@ -3,20 +3,17 @@ export interface WordAudio {
   natural: string;
   units: string[];
 }
-
 export interface Word {
   id: string;
   display: string;
   units: string[];
   audio: WordAudio;
 }
-
 export interface Level {
   level: number;
   ghost: boolean;
   words: Word[];
 }
-
 export interface LangPack {
   langCode: string;
   levels: Level[];
@@ -26,7 +23,7 @@ export interface PieceState {
   id: string;
   unitIndex: number;
   unit: string;
-  x: number;
+  x: number;         // reference-canvas coords (center)
   y: number;
   rotation: number;
   placed: boolean;
@@ -41,6 +38,9 @@ export interface SlotState {
   filled: boolean;
   pieceId: string | null;
   audioPath: string;
+  x: number;         // reference-canvas coords (center)
+  y: number;
+  w: number;
 }
 
 export interface WordCompletion {
@@ -50,27 +50,27 @@ export interface WordCompletion {
   highestLevel: number;
   display: string;
   units: string[];
+  playCount: number;
 }
 
 export interface PlaqueState {
+  plaqueId: string;  // stable per-instance id (a word can recur across levels)
   wordId: string;
   display: string;
   units: string[];
-  ghost: boolean;
+  x: number;         // wall-zone reference coords (center)
+  y: number;
   zOrder: number;
-  anchorIndex: number;
-  offsetX: number;
-  offsetY: number;
-  rotation: number;
+  playCount: number;
 }
 
 export type GamePhase =
   | 'loading'
-  | 'present'
-  | 'smashing'
-  | 'rebuild'
-  | 'complete'
-  | 'levelComplete';
+  | 'present'      // whole plaque seated, awaiting smash
+  | 'windup'       // hammer taken over, scaling to camera
+  | 'rebuild'      // pieces scattered, drag to slots
+  | 'complete'     // word finished: fuse/hop/flight
+  | 'levelComplete'; // 3-beat level transition
 
 export interface HintState {
   type: 'slot' | 'piece' | 'ghost';
@@ -79,6 +79,5 @@ export interface HintState {
 }
 
 export interface TutorialFlags {
-  hammerSeen: boolean;
-  dragSeen: boolean;
+  hammerDone: boolean; // set after first COMPLETED smash
 }

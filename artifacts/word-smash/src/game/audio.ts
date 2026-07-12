@@ -126,7 +126,84 @@ export async function playUnit(audioPath: string, unit: string): Promise<void> {
   }
 }
 
-export function playFoley(type: 'smash' | 'snap' | 'kick' | 'celebrate' | 'hammerEvolve'): void {
+// ---------------------------------------------------------------------------
+// Surprise crash pool — §5. A short synthesised "smash" with several distinct
+// flavours; never plays the same one twice in a row so each smash surprises.
+// (Synth fallback until real MP3 crash sfx land in M3.)
+// ---------------------------------------------------------------------------
+let lastCrashIndex = -1;
+
+function crashVariant(ctx: AudioContext, variant: number): void {
+  const now = ctx.currentTime;
+  const master = ctx.createGain();
+  master.gain.value = 0.9;
+  master.connect(ctx.destination);
+
+  // Body: filtered noise burst (the "crunch")
+  const dur = 0.22 + Math.random() * 0.1;
+  const noise = ctx.createBuffer(1, Math.floor(ctx.sampleRate * dur), ctx.sampleRate);
+  const data = noise.getChannelData(0);
+  for (let i = 0; i < data.length; i++) {
+    const env = Math.pow(1 - i / data.length, 1.8);
+    data[i] = (Math.random() * 2 - 1) * env;
+  }
+  const src = ctx.createBufferSource();
+  src.buffer = noise;
+  const filter = ctx.createBiquadFilter();
+  filter.type = variant % 2 === 0 ? 'lowpass' : 'bandpass';
+  const cutoffs = [900, 1400, 2200, 700, 1800];
+  filter.frequency.value = cutoffs[variant % cutoffs.length];
+  filter.Q.value = 0.8;
+  const ng = ctx.createGain();
+  ng.gain.setValueAtTime(0.7, now);
+  ng.gain.exponentialRampToValueAtTime(0.001, now + dur);
+  src.connect(filter);
+  filter.connect(ng);
+  ng.connect(master);
+  src.start(now);
+
+  // Thump: low sine drop (the "impact")
+  const osc = ctx.createOscillator();
+  const og = ctx.createGain();
+  const baseFreq = [150, 120, 180, 100, 160][variant % 5];
+  osc.frequency.setValueAtTime(baseFreq, now);
+  osc.frequency.exponentialRampToValueAtTime(45, now + 0.12);
+  og.gain.setValueAtTime(0.6, now);
+  og.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+  osc.connect(og);
+  og.connect(master);
+  osc.start(now);
+  osc.stop(now + 0.18);
+
+  // Crackle: a couple of tiny wood-chip clicks
+  const clicks = 2 + (variant % 2);
+  for (let i = 0; i < clicks; i++) {
+    const t = now + 0.02 + Math.random() * 0.12;
+    const c = ctx.createOscillator();
+    const cg = ctx.createGain();
+    c.type = 'triangle';
+    c.frequency.value = 1200 + Math.random() * 1600;
+    cg.gain.setValueAtTime(0.18, t);
+    cg.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+    c.connect(cg);
+    cg.connect(master);
+    c.start(t);
+    c.stop(t + 0.05);
+  }
+}
+
+export function playCrash(): void {
+  const ctx = getAudioContext();
+  const count = 5;
+  let idx = Math.floor(Math.random() * count);
+  if (idx === lastCrashIndex) idx = (idx + 1) % count;
+  lastCrashIndex = idx;
+  crashVariant(ctx, idx);
+}
+
+export function playFoley(
+  type: 'smash' | 'snap' | 'kick' | 'celebrate' | 'hammerEvolve' | 'whoosh' | 'thunk' | 'chime' | 'confetti',
+): void {
   const ctx = getAudioContext();
   const now = ctx.currentTime;
 
@@ -143,6 +220,77 @@ export function playFoley(type: 'smash' | 'snap' | 'kick' | 'celebrate' | 'hamme
       src.connect(gain);
       gain.connect(ctx.destination);
       src.start(now);
+      break;
+    }
+    case 'whoosh': {
+      // rising airy sweep during the hammer wind-up
+      const noise = ctx.createBuffer(1, ctx.sampleRate * 0.7, ctx.sampleRate);
+      const data = noise.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1);
+      const src = ctx.createBufferSource();
+      src.buffer = noise;
+      const bp = ctx.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.setValueAtTime(300, now);
+      bp.frequency.exponentialRampToValueAtTime(2600, now + 0.65);
+      bp.Q.value = 1.2;
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.35, now + 0.5);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.72);
+      src.connect(bp);
+      bp.connect(gain);
+      gain.connect(ctx.destination);
+      src.start(now);
+      break;
+    }
+    case 'thunk': {
+      // soft seat "thunk" when a piece settles into its recess
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(220, now);
+      osc.frequency.exponentialRampToValueAtTime(90, now + 0.08);
+      gain.gain.setValueAtTime(0.35, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.12);
+      break;
+    }
+    case 'chime': {
+      // warm word-complete chime (major triad shimmer)
+      [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+        const t = now + i * 0.06;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = f;
+        gain.gain.setValueAtTime(0.0001, t);
+        gain.gain.exponentialRampToValueAtTime(0.25, t + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.6);
+      });
+      break;
+    }
+    case 'confetti': {
+      [660, 880, 990, 1320].forEach((f, i) => {
+        const t = now + i * 0.05;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.value = f;
+        gain.gain.setValueAtTime(0.22, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.3);
+      });
       break;
     }
     case 'snap': {

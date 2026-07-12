@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { GameScene } from './components/GameScene';
 import type { LangPack } from './game/types';
 import { initEvents, emitSessionStart } from './game/events';
-import { getProgress } from './game/storage';
+import { getProgress, resetProgress } from './game/storage';
 
 function loadJSON<T>(url: string): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -36,6 +36,16 @@ export default function App() {
   const { lang, userId } = getLaunchParams();
 
   useEffect(() => {
+    // ?reset=1 (or ?cr_reset) wipes saved progress → start at level 1, then
+    // strips the flag so a normal refresh doesn't reset again.
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('reset') || params.has('cr_reset')) {
+      resetProgress(lang);
+      params.delete('reset');
+      params.delete('cr_reset');
+      const clean = window.location.pathname + (params.toString() ? `?${params}` : '');
+      window.history.replaceState(null, '', clean);
+    }
     initEvents(userId, lang);
     const jsonPath = `./lang/${lang}/wordsmash.json`;
     loadJSON<LangPack>(jsonPath)

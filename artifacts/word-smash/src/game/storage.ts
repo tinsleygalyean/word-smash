@@ -126,6 +126,21 @@ export function saveProgress(lang: string, data: Progress): void {
   }
 }
 
+/** Wipe ALL saved state for a language (progress, plaques, queues) → back to level 1. */
+export function resetProgress(lang: string): void {
+  try {
+    const prefix = `ws_${lang}_`;
+    const toRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(prefix)) toRemove.push(k);
+    }
+    toRemove.forEach((k) => localStorage.removeItem(k));
+  } catch {
+    /* ignore */
+  }
+}
+
 export function getWordQueueForLevel(lang: string, level: number): string[] | null {
   try {
     const raw = localStorage.getItem(key(lang, `queue_${level}`));

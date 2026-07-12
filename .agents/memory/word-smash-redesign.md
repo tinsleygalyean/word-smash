@@ -81,3 +81,22 @@ Single `useReducer` in `GameScene.tsx` for discrete state; multi-step timed
 animations (smash scatter, word-complete fuse/hop/flight-to-wall, level
 transition) are orchestrated imperatively with `setTimeout`, never in the reducer.
 Phases: loading→present→windup→rebuild→complete→levelComplete.
+
+## Audio: language-pack paths are pack-relative — must be prefixed at load
+Pack stores audio paths as `audios/<file>.mp3` (relative to the pack dir), but the
+loadBinary XHR resolves against the document, not the JSON. `resolveAudioPaths()`
+in `App.tsx` prepends `./lang/{lang}/` at load. Without it the XHR hits the SPA
+fallback (index.html, HTTP **200** — not a 404), decodeAudioData fails, and audio
+silently falls back to Web Speech TTS.
+**Why:** the bug was invisible through M1/M2 because no real MP3s existed to
+exercise the path; a 200-returning SPA fallback masks a "missing file". Any new
+lang pack or asset loaded by relative path needs the same prefixing.
+
+## Real phoneme audio (M3) — never feed a bare letter to TTS
+MP3s in `public/lang/english/audios/` are ElevenLabs TTS synthesised from phonetic
+spellings (b→"buh", s→"sssss", ee→"eee"), NEVER a bare letter, so a letter name
+can never be produced. Vowels/ambiguous letters are spelled per word context
+(baby a→"ay", cat a→"ah", pencil c→"sssss" /s/, zebra e→"eee"). Regenerating or
+adding words must keep this rule and cover every per-word unit file in the pack.
+**Why:** the product's core literacy rule is phoneme SOUNDS not letter names;
+enforcing it at the audio source (not just runtime) makes violations impossible.

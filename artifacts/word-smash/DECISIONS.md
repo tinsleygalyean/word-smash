@@ -1,5 +1,28 @@
 # Word Smash — Architecture Decisions
 
+## M3 scope (July 2026) — real recorded audio
+
+- Real MP3s now ship at `public/lang/english/audios/` (144 files: 24 words ×
+  slow+natural, plus per-word phoneme/syllable unit clips). Generated with
+  ElevenLabs TTS (voice "Jessica", `eleven_multilingual_v2`); slow word takes
+  use `voice_settings.speed 0.72`, natural/units use `1.0`.
+- **Phoneme SOUNDS, never letter NAMES** is enforced at the source: unit clips
+  are synthesised from phonetic spellings (e.g. `b`→"buh", `s`→"sssss",
+  `ee`→"eee"), never a bare letter, so the engine can never utter a letter name.
+  Vowels/ambiguous letters are spelled per word context (baby `a`→"ay" long-a,
+  cat `a`→"ah" short-a, pencil `c`→"sssss" /s/, zebra `e`→"eee" long-e, etc.).
+- The audio engine already preferred MP3s and fell back to Web Speech TTS only
+  when a file was missing/undecodable — so shipping the files switches playback
+  to real audio automatically. TTS is now a safety net, not the default.
+- **Path-resolution fix:** language-pack audio paths are stored relative to the
+  pack dir (`audios/…`). `resolveAudioPaths()` in `App.tsx` prefixes them with
+  `./lang/{lang}/` at load so the loadBinary XHR resolves them in dev (base path)
+  and in the offline bundle (base `./`). Without this the XHR hit the SPA
+  fallback (index.html, HTTP 200) → decode fail → silent TTS fallback. This bug
+  was latent in M1/M2 because no real MP3s existed to exercise the path.
+- Standalone offline bundle copies all 144 MP3s via Vite's default `public/`
+  copy; verified present in `dist/standalone/lang/english/audios/`.
+
 ## M2 scope (July 2026)
 
 - **Phoneme SOUNDS, never letter NAMES** — audio for a unit must say the sound the

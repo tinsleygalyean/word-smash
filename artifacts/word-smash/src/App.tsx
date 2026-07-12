@@ -22,6 +22,29 @@ function loadJSON<T>(url: string): Promise<T> {
   });
 }
 
+// Audio paths in the language pack are stored relative to the pack's own
+// directory (e.g. "audios/cat_natural.mp3"). Resolve them against the pack
+// location (`./lang/{lang}/`) so the loadBinary XHR finds them in dev (base
+// path) and in the offline standalone bundle (base "./") alike.
+function resolveAudioPaths(pack: LangPack, lang: string): LangPack {
+  const prefix = `./lang/${lang}/`;
+  const abs = (p: string) => (/^([a-z]+:)?\/\//i.test(p) || p.startsWith(prefix) ? p : prefix + p);
+  return {
+    ...pack,
+    levels: pack.levels.map((lvl) => ({
+      ...lvl,
+      words: lvl.words.map((w) => ({
+        ...w,
+        audio: {
+          slow: abs(w.audio.slow),
+          natural: abs(w.audio.natural),
+          units: w.audio.units.map(abs),
+        },
+      })),
+    })),
+  };
+}
+
 function getLaunchParams() {
   const params = new URLSearchParams(window.location.search);
   return {
@@ -49,7 +72,8 @@ export default function App() {
     initEvents(userId, lang);
     const jsonPath = `./lang/${lang}/wordsmash.json`;
     loadJSON<LangPack>(jsonPath)
-      .then((pack) => {
+      .then((rawPack) => {
+        const pack = resolveAudioPaths(rawPack, lang);
         setLangPack(pack);
         const { currentLevel } = getProgress(lang);
         emitSessionStart(currentLevel);

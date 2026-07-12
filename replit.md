@@ -41,7 +41,7 @@ M2 (complete): Phoneme-sound TTS (says /b/ "buh", never letter names), level ind
 
 Redesign ("Honey & Paint", complete): Full visual + interaction redesign to the approved contract in `attached_assets/word_smash_design/handoff/DESIGN-SPEC.md`. Fixed 1200×540 reference canvas, cover-scaled to the device; all geometry in reference coords. No text/emoji/mascot in gameplay. Phases: loading→present→windup→rebuild→complete→levelComplete. 10-stage hammer evolution, plaque wall with drag-to-replay and replay-count finishes.
 
-M3 (planned): Real recorded MP3 audio (ElevenLabs or voice talent) — MUST be phoneme sounds, never letter names.
+M3 (complete): Real recorded MP3 audio via ElevenLabs TTS at `public/lang/english/audios/` (144 files: word slow/natural + per-word phoneme/syllable units). Synthesised from phonetic spellings (b→"buh", never "b") so letter names can never be spoken; vowels/ambiguous letters spelled per word context. Web Speech TTS is now a fallback only. `resolveAudioPaths()` in `App.tsx` fixes relative audio-path resolution for both dev and the offline bundle.
 
 ## User preferences
 

@@ -194,10 +194,19 @@ export function Hammer({
         opacity,
         zIndex: mode === 'windup' || mode === 'return' ? 900 : 40,
         touchAction: 'none',
-        filter: 'drop-shadow(0 8px 12px rgba(90,55,20,.35))',
       }}
     >
-      <div className={mode === 'dock' && interactive ? 'ws-hammer-rock' : undefined} style={{ width: '100%', height: '100%' }}>
+      {/* oval contact shadow, centered at the bottom of the handle */}
+      <div
+        style={{
+          position: 'absolute', left: '50.4%', top: '96%',
+          width: w * 0.55, height: w * 0.16,
+          transform: 'translate(-50%, -50%)',
+          background: 'radial-gradient(ellipse at center, rgba(90,55,20,.4) 0%, rgba(90,55,20,0) 70%)',
+          pointerEvents: 'none',
+        }}
+      />
+      <div className={mode === 'dock' && interactive ? 'ws-hammer-rock' : undefined} style={{ position: 'relative', width: '100%', height: '100%' }}>
         <HammerSVG recipe={recipe} />
       </div>
     </div>

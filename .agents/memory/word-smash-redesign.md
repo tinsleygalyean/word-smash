@@ -14,6 +14,33 @@ component takes `stageRef`.
 **Why:** the design contract is pixel-authored art direction; percentage/flex
 layout could not reproduce it faithfully. Keep new geometry in reference coords.
 
+## CSS keyframe `transform` clobbers inline positioning transforms
+Any element positioned with an inline `transform: translate(x, y)` will be
+teleported to the top-left corner if a CSS animation class (e.g. `.ws-hop`, whose
+keyframes set `transform: translateY(...)`) is applied to the SAME element — the
+keyframe's `transform` fully overrides the inline one.
+**Why:** the completion plaque "appeared in the upper-left corner" because
+`.ws-hop` was on the same div that held its `translate` position.
+**How to apply:** split into two nested divs — OUTER owns positioning
+(`translate`) + slide transition, INNER owns the keyframe animation. Same pattern
+already needed for hammer spin (spin on inner, position on outer).
+
+## New wall plaques must land on top (zOrder = maxZ + 1)
+Because dragging a plaque bumps its `zOrder` to `maxZ + 1`, a freshly completed
+plaque created with `zOrder = plaques.length` can land UNDER a previously
+front-brought plaque. Always create new plaques at `maxZ + 1` too.
+
+## Docked hammer must be hidden during the level transition
+`LevelTransition` draws its own hammer; the normal `<Hammer>` in GameScene must be
+gated on `!state.transition` or a duplicate/clone sits on the dock during the
+upgrade sequence.
+
+## Letters win the touch over the docked hammer
+Draggable `Piece` tiles render with `zIndex: 50 + piece.zIndex` so a letter near
+the bottom-right hammer dock (hammer dock `zIndex: 40`) captures pointerdown
+instead of the hammer. The swinging hammer uses `zIndex: 900` (windup/return) so
+it still sits above pieces mid-swing.
+
 ## Plaque identity — ONE plaque per wordId (§6)
 The English pack repeats ~24 word IDs across levels (ghost vs no-ghost variants).
 Per DESIGN-SPEC §6 the wall shows exactly ONE plaque per `wordId`; that plaque

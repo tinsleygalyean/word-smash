@@ -604,7 +604,7 @@ export function GameScene({ langPack, lang }: Props) {
         const plaque: PlaqueState = {
           plaqueId: `plq-${word.id}`,
           wordId: word.id, display: word.display, units: word.units,
-          x: wallPos.x, y: wallPos.y, zOrder: st.plaques.length, playCount, highestLevel, levelsPlayed,
+          x: wallPos.x, y: wallPos.y, zOrder: maxZ + 1, playCount, highestLevel, levelsPlayed,
         };
         plaques = [...st.plaques, plaque];
       }
@@ -840,8 +840,8 @@ export function GameScene({ langPack, lang }: Props) {
             />
           )}
 
-          {/* scattered / placed pieces */}
-          {showPieces && state.pieces.map((p) => (
+          {/* scattered / placed pieces (hidden the instant the word recombines into its plaque) */}
+          {showPieces && !flying && state.pieces.map((p) => (
             <Piece
               key={p.id}
               piece={p}
@@ -855,33 +855,37 @@ export function GameScene({ langPack, lang }: Props) {
             />
           ))}
 
-          {/* flying completed plaque */}
+          {/* flying completed plaque — outer div owns the position (bench → wall);
+              inner div owns the hop bounce so the animation never clobbers position */}
           {flying && (
             <div
-              className={flying.hop ? 'ws-hop' : undefined}
               style={{
                 position: 'absolute', left: 0, top: 0, zIndex: 300,
                 transform: `translate(${flying.tx - flying.w / 2}px, ${flying.ty - PIECE_H / 2}px)`,
-                transition: flying.hop ? 'none' : 'transform 0.85s cubic-bezier(.34,.9,.4,1)',
+                transition: 'transform 0.85s cubic-bezier(.34,.9,.4,1)',
               }}
             >
-              <FlyingFace text={flying.text} w={flying.w} shrink={!flying.hop} />
+              <div className={flying.hop ? 'ws-hop' : undefined}>
+                <FlyingFace text={flying.text} w={flying.w} shrink={!flying.hop} />
+              </div>
             </div>
           )}
 
-          {/* hammer */}
-          <Hammer
-            stageIndex={state.hammerStage}
-            phase={phase}
-            stageRef={stageRef}
-            target={{ x: TRAY_CENTER.x, y: TRAY_CENTER.y }}
-            interactive={hammerInteractive}
-            dimmed={phase === 'rebuild'}
-            onWindupStart={onWindupStart}
-            onWindupCancel={onWindupCancel}
-            onStrike={doStrike}
-            onResmash={doResmash}
-          />
+          {/* hammer — hidden during the upgrade transition, which draws its own */}
+          {!state.transition && (
+            <Hammer
+              stageIndex={state.hammerStage}
+              phase={phase}
+              stageRef={stageRef}
+              target={{ x: TRAY_CENTER.x, y: TRAY_CENTER.y }}
+              interactive={hammerInteractive}
+              dimmed={phase === 'rebuild'}
+              onWindupStart={onWindupStart}
+              onWindupCancel={onWindupCancel}
+              onStrike={doStrike}
+              onResmash={doResmash}
+            />
+          )}
 
           {/* wind-up world vignette (§2/§3) */}
           {phase === 'windup' && <div className="ws-vignette" />}

@@ -58,7 +58,7 @@ export function Piece({ piece, w, hint, stageRef, onPickup, onMove, onDrop }: Pr
         height: PIECE_H,
         transform: `translate(${piece.x - w / 2}px, ${piece.y - PIECE_H / 2}px) rotate(${piece.rotation}deg)`,
         transition: draggingRef.current ? 'none' : 'transform 0.28s cubic-bezier(.34,1.56,.64,1)',
-        zIndex: piece.zIndex,
+        zIndex: 50 + piece.zIndex,
         cursor: piece.placed ? 'default' : 'grab',
         touchAction: 'none',
         willChange: 'transform',

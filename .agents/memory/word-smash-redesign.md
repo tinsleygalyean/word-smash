@@ -35,6 +35,17 @@ front-brought plaque. Always create new plaques at `maxZ + 1` too.
 gated on `!state.transition` or a duplicate/clone sits on the dock during the
 upgrade sequence.
 
+## The upgrade transition must reuse the real hammer SVG, not a copy
+`LevelTransition` and the real `Hammer` share ONE `HammerSVG` renderer (exported
+from `Hammer.tsx`). A previous separate `FlourishHammer` copy omitted several
+recipe decorations (handle ring, stripe, 2nd gold band, cream dot, sparkle), so at
+the upgrade flash the hammer showed only a partial new form and the rest "popped
+in" only when the real hammer returned to dock.
+**Why:** two hand-maintained SVGs silently drift.
+**How to apply:** any hammer drawn anywhere must go through the shared `HammerSVG`.
+It uses `useId()` for its gradient id so the multiple copies drawn during the spin
+don't collide.
+
 ## Letters win the touch over the docked hammer
 Draggable `Piece` tiles render with `zIndex: 50 + piece.zIndex` so a letter near
 the bottom-right hammer dock (hammer dock `zIndex: 40`) captures pointerdown

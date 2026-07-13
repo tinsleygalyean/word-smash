@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type RefObject } from 'react';
+import { useEffect, useId, useRef, useState, type RefObject } from 'react';
 import type { GamePhase } from '../game/types';
 import {
   HAMMER_STAGES, HAMMER_DOCK, SNAP_RADIUS, C, type HammerStage,
@@ -203,8 +203,8 @@ export function Hammer({
   );
 }
 
-function HammerSVG({ recipe }: { recipe: HammerStage }) {
-  const hid = `hg-${recipe.headA.replace('#', '')}-${recipe.size}`;
+export function HammerSVG({ recipe }: { recipe: HammerStage }) {
+  const hid = useId();
   return (
     <svg viewBox="0 0 120 160" width="100%" height="100%" style={{ display: 'block', overflow: 'visible' }}>
       <defs>

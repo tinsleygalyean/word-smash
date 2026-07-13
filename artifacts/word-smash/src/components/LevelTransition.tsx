@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  HAMMER_STAGES, HAMMER_DOCK, STAGE_W, STAGE_H, C, type HammerStage,
+  HAMMER_STAGES, HAMMER_DOCK, STAGE_W, STAGE_H,
 } from '../game/design';
 import { Sparkles } from './Effects';
+import { HammerSVG } from './Hammer';
 import { playFoley } from '../game/audio';
 
 interface Props {
@@ -121,7 +122,7 @@ export function LevelTransition({ fromStage, toStage, onPersist, onStartNext, on
           }}
         >
           <div className="ws-hammer-spin" style={{ width: '100%', height: '100%', animationDelay: `${delay}s` }}>
-            <FlourishHammer recipe={recipe} />
+            <HammerSVG recipe={recipe} />
           </div>
         </div>
       ))}
@@ -141,36 +142,12 @@ export function LevelTransition({ fromStage, toStage, onPersist, onStartNext, on
         }}
       >
         <div className={phase === 'spin' ? 'ws-hammer-spin' : undefined} style={{ width: '100%', height: '100%' }}>
-          <FlourishHammer recipe={recipe} />
+          <HammerSVG recipe={recipe} />
         </div>
       </div>
 
       {/* white flash at the moment of transformation */}
       {flashKey > 0 && <div key={flashKey} className="ws-white-flash" />}
     </div>
-  );
-}
-
-function FlourishHammer({ recipe }: { recipe: HammerStage }) {
-  return (
-    <svg viewBox="0 0 120 160" width="100%" height="100%" style={{ overflow: 'visible' }}>
-      <defs>
-        <linearGradient id="ws-flourish-head" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor={recipe.headA} />
-          <stop offset="1" stopColor={recipe.headB} />
-        </linearGradient>
-      </defs>
-      <rect x="53" y="58" width="15" height="96" rx="7" fill={recipe.grip} stroke={recipe.gripStroke} strokeWidth="2" />
-      <rect x="18" y="20" width="84" height="46" rx="15" fill="url(#ws-flourish-head)" stroke={recipe.headStroke} strokeWidth="3" />
-      {recipe.goldBand >= 1 && <rect x="18" y="55" width="84" height="4" fill={C.gold} />}
-      {recipe.star > 0 && (
-        <path
-          d="M60 30 l4.3 8.7 9.6 1.4 -6.95 6.77 1.64 9.56 -8.59 -4.52 -8.59 4.52 1.64 -9.56 -6.95 -6.77 9.6 -1.4 Z"
-          fill={recipe.star === 1 ? C.faceTop : 'none'}
-          stroke={C.faceTop}
-          strokeWidth={recipe.star === 2 ? 2.5 : 0}
-        />
-      )}
-    </svg>
   );
 }

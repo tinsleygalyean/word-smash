@@ -140,17 +140,7 @@ export function LevelTransition({ fromStage, toStage, onPersist, onStartNext, on
           transition: 'transform 0.5s ease, width 0.3s ease, height 0.3s ease',
         }}
       >
-        {/* oval contact shadow, centered at the bottom of the handle (matches Hammer) */}
-        <div
-          style={{
-            position: 'absolute', left: '50.4%', top: '96%',
-            width: recipe.size * 0.55, height: recipe.size * 0.16,
-            transform: 'translate(-50%, -50%)',
-            background: 'radial-gradient(ellipse at center, rgba(90,55,20,.4) 0%, rgba(90,55,20,0) 70%)',
-            pointerEvents: 'none',
-          }}
-        />
-        <div className={phase === 'spin' ? 'ws-hammer-spin' : undefined} style={{ position: 'relative', width: '100%', height: '100%' }}>
+        <div className={phase === 'spin' ? 'ws-hammer-spin' : undefined} style={{ width: '100%', height: '100%' }}>
           <FlourishHammer recipe={recipe} />
         </div>
       </div>

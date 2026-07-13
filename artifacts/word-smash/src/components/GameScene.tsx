@@ -810,8 +810,8 @@ export function GameScene({ langPack, lang }: Props) {
             }}
           />
 
-          {/* recesses + slots */}
-          {showPieces && (
+          {/* recesses + slots (hidden together with the tiles the instant the word recombines into its plaque) */}
+          {showPieces && !flying && (
             <Tray
               slots={state.slots}
               ghost={ghostLevel}

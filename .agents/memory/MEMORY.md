@@ -1,1 +1,2 @@
-- [Word Smash redesign](word-smash-redesign.md) — reference-canvas (1200×540 cover-scaled) layout, plaque identity by plaqueId not wordId, file:// offline rules, no-text-in-gameplay.
+- [Word Smash redesign](word-smash-redesign.md) — "Honey & Paint" reference-canvas architecture, phases, plaque identity, hammer evolution.
+- [Word Smash container packaging](word-smash-container-packaging.md) — Curious Reader spec: Layout A 2-tier, cr_event envelope, ZIP tiers, `-eng` token override.

@@ -5,6 +5,7 @@ An offline literacy web game for children ages 4–8 built for Curious Learning'
 ## Run & Operate
 
 - `pnpm --filter @workspace/word-smash run dev` — run the game (port 23518, preview at `/`)
+- `pnpm --filter @workspace/word-smash run package:container` — build the Curious Reader upload ZIPs (`--lang <code>`, default `english`) into `artifacts/word-smash/dist/container/`
 - `pnpm --filter @workspace/api-server run dev` — run the API server (port 8080)
 - `pnpm run typecheck` — full typecheck across all packages
 

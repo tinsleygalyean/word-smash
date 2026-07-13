@@ -1,5 +1,49 @@
 # Word Smash — Architecture Decisions
 
+## Container packaging + cr_event compliance (July 2026)
+
+Prepared Word Smash for upload to the Curious Reader container per the
+third-party game developer spec (v1.1). This is a **Layout A (2-tier)** title:
+engine + language only, **no core level** (`hasCoreLevel: false`).
+
+- **`cr_event` contract (spec §6.2).** `src/game/events.ts` posts every message
+  as the string `{ "type": "cr_event", "payload": { … } }`. The payload carries
+  exactly the required top-level fields: `payload_id` (fresh UUID v4 per
+  payload), `cr_user_id` (from the launch URL, `""` if absent), `sub_app_id`
+  (`wordsmash`), `payload_version: 1`, `collection`
+  (`user_sessions_data` | `summary_data`), `timestamp`
+  (`new Date().toISOString()`), `data`, and `options` (summary_data only —
+  omitted for user_sessions_data). Fire-and-forget, exception-safe, silent
+  no-op when `window.ReactNativeWebView?.postMessage` is absent. The bridge is
+  intentionally shipped in the standalone build (spec §6.5 — do NOT stub it; it
+  makes no network calls and is the only offline-capable reporting path).
+- **ZIP packaging (spec §5).** `scripts/package-container.mjs` (run via
+  `pnpm --filter @workspace/word-smash run package:container`) rebuilds the
+  standalone bundle and emits two ZIPs into `dist/container/`:
+  - `wordsmash-eng.zip` — engine tier. `index.html` at the ZIP root, JS/CSS,
+    `assets/`, `fonts/`, `favicon.svg`; **no `lang/`**, no `*.map`, and non-game
+    web files (`opengraph.jpg`, `robots.txt`) excluded. Built from a clean
+    staging tree for deterministic exclusions.
+  - `wordsmash-lang-<code>.zip` — language tier. **Only** `lang/<code>/`
+    (`wordsmash.json` + every `audios/*.mp3`). The `--lang` code is a
+    parameter so future packs reuse the same script; the script never emits a
+    core-tier ZIP.
+- **Engine token override.** The spec's frozen engine filename token is
+  `-core`, but this project deliberately ships the engine ZIP as
+  `wordsmash-eng.zip`. **The Curious Learning CMS pipeline must be configured to
+  classify the `-eng` token as the engine tier for this game.**
+- **Built-in integrity checks.** After zipping, the script asserts: engine ZIP
+  has `index.html` at root and no `lang/`/excluded files; language ZIP contains
+  only `lang/<code>/…`; the language ZIP's audio count matches the source; and
+  `wordsmash.json` is present. The two ZIPs merge into one directory with no
+  overwrites (disjoint subtrees: engine at root, language under `lang/<code>/`).
+- **Already-compliant items (spec §7a) verified:** relative paths only (no
+  `src="/"`, no `url(/…)`), no `.map` files shipped, no absolute/CDN URLs in the
+  language JSON, no feature-flag/GTM/Sentry/analytics SDKs in the bundle, all
+  assets loaded via `loadBinary()` XHR, self-hosted WOFF2 font, localStorage
+  persistence. The tile icon is uploaded alongside the language pack (NOT packed
+  in the ZIP) and is handled at upload time, not here.
+
 ## M3 scope (July 2026) — real recorded audio
 
 - Real MP3s now ship at `public/lang/english/audios/` (144 files: 24 words ×

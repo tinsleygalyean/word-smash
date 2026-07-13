@@ -6,6 +6,7 @@ An offline literacy web game for children ages 4–8 built for Curious Learning'
 
 - `pnpm --filter @workspace/word-smash run dev` — run the game (port 23518, preview at `/`)
 - `pnpm --filter @workspace/word-smash run package:container` — build the Curious Reader upload ZIPs (`--lang <code>`, default `english`) into `artifacts/word-smash/dist/container/`
+- `pnpm --filter @workspace/scripts run upload:wordsmash` — regenerate the ZIPs and upload them through the Curious Reader CMS MCP endpoint (`--lang <code>`; dry-runs unless `CR_CMS_SERVER_URL` + `CR_MCP_API_KEY` are set). See `artifacts/word-smash/UPLOAD.md`.
 - `pnpm --filter @workspace/api-server run dev` — run the API server (port 8080)
 - `pnpm run typecheck` — full typecheck across all packages
 
@@ -23,7 +24,10 @@ An offline literacy web game for children ages 4–8 built for Curious Learning'
   - `src/game/` — core engine: types, audio, storage, events, physics
   - `src/components/` — React game components
   - `public/lang/english/wordsmash.json` — authoritative 10-level English language pack
+  - `upload/wordsmash-icon-512.png` — true-PNG 512×512 tile icon (uploaded as `iconBase64`; never packed in a ZIP)
   - `DECISIONS.md` — architecture decisions and offline constraints
+  - `UPLOAD.md` — Curious Reader CMS MCP upload guide (sequence, exact args, prerequisites)
+- `scripts/src/upload-wordsmash.ts` (`@workspace/scripts`) — the MCP uploader driving `list_inventory` → `upload_core_game` → `upload_language_pack`
 - `artifacts/api-server/` — unused for M1, available for future leaderboard/analytics
 
 ## Architecture decisions

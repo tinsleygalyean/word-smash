@@ -44,3 +44,24 @@ engine ZIP (index.html at root, no `lang/`, no `*.map`, excludes
 `opengraph.jpg`/`robots.txt`) and `wordsmash-lang-<code>.zip` (only
 `lang/<code>/`). The tile icon is uploaded *alongside* the language pack, never
 packed inside the ZIP.
+
+## MCP upload flow
+
+`pnpm --filter @workspace/scripts run upload:wordsmash [-- --lang <code>]`
+(`scripts/src/upload-wordsmash.ts`) regenerates the ZIPs, base64-encodes them +
+the 512×512 tile icon (`artifacts/word-smash/upload/wordsmash-icon-512.png`),
+and drives the CMS MCP tools in order: `list_inventory` → `upload_core_game`
+(engine, `hasCoreLevel:false`) → `upload_language_pack` (+ `iconBase64`) →
+`list_inventory`. Uses the official `@modelcontextprotocol/sdk`
+`StreamableHTTPClientTransport` (stateless POST `<server>/mcp`, `Authorization:
+Bearer`). Full guide + exact args in `artifacts/word-smash/UPLOAD.md`.
+
+**Why dry-run matters:** creds (`CR_CMS_SERVER_URL`, `CR_MCP_API_KEY`) come from
+the Curious Learning team and are NOT in secrets yet, so live upload/promotion is
+externally blocked. The script reads creds from env only and no-ops with a clear
+dry-run message when absent — never hard-code them. `promote_content` is
+CL-staff-only; the script only surfaces item IDs.
+
+**How to apply:** both `--lang english` and pnpm's `-- --lang english`
+passthrough work (the parser skips a literal `--`) — same operator-confusion fix
+the packager needed.

@@ -1,55 +1,47 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  HAMMER_STAGES, HAMMER_DOCK, STAGE_W, STAGE_H, TRAY_CENTER, PIECE_H, C,
-  finishForLevelCount, type HammerStage,
+  HAMMER_STAGES, HAMMER_DOCK, STAGE_W, STAGE_H, C, type HammerStage,
 } from '../game/design';
-import { Confetti } from './Effects';
-import { PlaqueFace } from './PlaqueFace';
+import { Sparkles } from './Effects';
 import { playFoley } from '../game/audio';
-
-export interface EarnedPlaque {
-  wordId: string;
-  display: string;
-  x: number;
-  y: number;
-  levelsPlayed: number;
-}
 
 interface Props {
   fromStage: number;
   toStage: number;
-  earned: EarnedPlaque[];
-  playWord: (wordId: string) => void;
-  onPersist: () => void;   // beat 2: hammer stage + level index persist
-  onStartNext: () => void; // beat 3: real strike (crash/shake) + next level drops
-  onDone: () => void;
+  onPersist: () => void;   // swap to the new hammer stage + persist at the flash
+  onStartNext: () => void; // load the next level's first word (behind the dim)
+  onDone: () => void;      // remove the overlay, revealing the ready bench
 }
 
-const WALL_PLAQUE_W = 150;
-const WALL_PLAQUE_H = Math.round(PIECE_H * 0.62);
+type Phase = 'hop' | 'spin' | 'flash' | 'return';
 
-type Beat = 1 | 2 | 3;
+const centerX = STAGE_W / 2;
+const centerY = STAGE_H * 0.42;
+
+// beat timing (ms from mount)
+const HOP_MS = 500;    // dock → center
+const SPIN_MS = 900;   // two accelerating turns
+const BURST_MS = 600;  // radiant burst + sparkles fade
+const RETURN_MS = 500; // center → dock
 
 /**
- * §8 level transition + hammer upgrade — three beats, ~6s, tap-to-skip after beat 1.
- *  Beat 1: earned plaques bow L→R (100ms apart) while their words play back-to-back;
- *          rising fanfare; docked hammer straightens & shivers.
- *  Beat 2: world dims, hammer to center, spins ×2, white flash → next stage,
- *          cymbal + haptic, old-hammer after-image lingers; persist happens here.
- *  Beat 3: practice swing lands as a real strike on the empty bench: confetti +
- *          crash + light shake, next level's first plaque drops & auto-plays.
+ * Single focused hammer-upgrade sequence (~2.5s), tap-to-fast-forward.
+ *  1. World dims + a warm spotlight blooms; the hammer hops dock → center.
+ *  2. It spins twice (accelerating, blur-streak ghosts) → white flash lands it
+ *     as the next stage (bigger + new paint per §7); haptic tick + cymbal.
+ *  3. A radiant burst + sparkles bloom, then the upgraded hammer returns to the
+ *     dock and the next level's first word is revealed ready on the bench.
+ * Persist happens at the flash so an app kill mid-celebration reopens upgraded.
  */
-export function LevelTransition({
-  fromStage, toStage, earned, playWord, onPersist, onStartNext, onDone,
-}: Props) {
-  const [beat, setBeat] = useState<Beat>(1);
+export function LevelTransition({ fromStage, toStage, onPersist, onStartNext, onDone }: Props) {
+  const [phase, setPhase] = useState<Phase>('hop');
+  const [atCenter, setAtCenter] = useState(false);
   const [flashKey, setFlashKey] = useState(0);
+  const [burstKey, setBurstKey] = useState(0);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const persisted = useRef(false);
   const startedNext = useRef(false);
   const finished = useRef(false);
-
-  const recapMs = Math.max(1500, earned.length * 700 + 400);
 
   const goPersist = () => { if (!persisted.current) { persisted.current = true; onPersist(); } };
   const goNext = () => { if (!startedNext.current) { startedNext.current = true; onStartNext(); } };
@@ -59,151 +51,102 @@ export function LevelTransition({
     const T = timers.current;
     const add = (fn: () => void, ms: number) => { T.push(setTimeout(fn, ms)); };
 
-    // Beat 1 — recap
-    playFoley('fanfare');
-    earned.forEach((p, i) => add(() => playWord(p.wordId), i * 700));
-
-    // Beat 2 — transformation
+    // beat 1: dim + spotlight bloom, hammer hops dock → center
+    add(() => setAtCenter(true), 30);
+    // beat 2: spin ×2 accelerating
+    add(() => setPhase('spin'), HOP_MS);
+    // white flash → lands as the new stage + haptic + cymbal + burst/sparkles
     add(() => {
-      setBeat(2);
+      setPhase('flash');
+      setFlashKey((k) => k + 1);
+      setBurstKey((k) => k + 1);
       goPersist();
       playFoley('cymbal');
       try { navigator.vibrate?.(30); } catch { /* ignore */ }
-    }, recapMs);
-    add(() => setFlashKey((k) => k + 1), recapMs + 800); // white flash at stage swap
-
-    // Beat 3 — confetti smash + next level drop (overlap)
-    add(() => { setBeat(3); goNext(); }, recapMs + 2500);
-    add(() => goDone(), recapMs + 4500);
+    }, HOP_MS + SPIN_MS);
+    // beat 3: upgraded hammer returns to dock; next word loads behind the dim
+    add(() => { setPhase('return'); setAtCenter(false); goNext(); }, HOP_MS + SPIN_MS + BURST_MS);
+    // reveal the ready bench
+    add(goDone, HOP_MS + SPIN_MS + BURST_MS + RETURN_MS);
 
     return () => { T.forEach(clearTimeout); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // §8: tap-to-skip is only offered AFTER beat 1 (the recap must play in full);
-  // a tap during beat 2/3 fast-forwards the remaining beats to completion.
+  // A tap fast-forwards the remaining beats to completion, idempotently.
   function skip() {
-    if (beat >= 2) {
-      timers.current.forEach(clearTimeout);
-      timers.current = [];
-      goPersist();
-      goNext();
-      goDone();
-    }
+    timers.current.forEach(clearTimeout);
+    timers.current = [];
+    goPersist();
+    goNext();
+    goDone();
   }
 
-  const shownStage = beat >= 2 ? toStage : fromStage;
+  const upgraded = phase === 'flash' || phase === 'return';
+  const shownStage = upgraded ? toStage : fromStage;
   const recipe = HAMMER_STAGES[Math.max(0, Math.min(HAMMER_STAGES.length - 1, shownStage))];
-  const oldRecipe = HAMMER_STAGES[Math.max(0, Math.min(HAMMER_STAGES.length - 1, fromStage))];
 
-  // hammer position: docked in beat 1, center stage in beat 2/3
-  const centerX = STAGE_W / 2;
-  const centerY = STAGE_H * 0.42;
-  const hammerX = beat === 1 ? HAMMER_DOCK.x : centerX;
-  const hammerY = beat === 1 ? HAMMER_DOCK.y : centerY;
+  const hammerX = atCenter ? centerX : HAMMER_DOCK.x;
+  const hammerY = atCenter ? centerY : HAMMER_DOCK.y;
+  const hammerH = recipe.size * (160 / 120);
+  // Match the real Hammer's dock pose so the return-to-dock handoff is seamless.
+  const rot = atCenter ? 0 : -26;
 
   return (
-    <div
-      onPointerDown={skip}
-      style={{ position: 'absolute', inset: 0, zIndex: 940, pointerEvents: 'auto' }}
-    >
-      {/* world dim: warm during beat1, deeper spotlight during beat2 */}
+    <div onPointerDown={skip} style={{ position: 'absolute', inset: 0, zIndex: 940, pointerEvents: 'auto' }}>
+      {/* world dim + warm spotlight bloom at center */}
       <div
         className="ws-fade-in"
         style={{
           position: 'absolute',
           inset: 0,
-          background:
-            beat >= 2
-              ? 'radial-gradient(60% 60% at 50% 42%, rgba(255,244,214,.28) 0%, rgba(30,18,6,.28) 70%)'
-              : 'radial-gradient(120% 90% at 50% 40%, rgba(255,244,214,.35), transparent 70%)',
+          background: 'radial-gradient(60% 60% at 50% 42%, rgba(255,244,214,.30) 0%, rgba(30,18,6,.28) 70%)',
         }}
       />
 
-      {/* Beat 1 — earned plaques bow left→right, playing back-to-back */}
-      {beat === 1 && earned.map((p, i) => {
-        const finish = finishForLevelCount(p.levelsPlayed);
-        return (
-          <div
-            key={p.wordId}
-            className="ws-plaque-bow"
-            style={{
-              position: 'absolute',
-              left: 0,
-              top: 0,
-              width: WALL_PLAQUE_W,
-              height: WALL_PLAQUE_H,
-              ['--bx' as string]: `${p.x - WALL_PLAQUE_W / 2}px`,
-              ['--by' as string]: `${p.y - WALL_PLAQUE_H / 2}px`,
-              animationDelay: `${i * 0.1}s`,
-              zIndex: 30,
-            }}
-          >
-            <PlaqueFace
-              w={WALL_PLAQUE_W}
-              h={WALL_PLAQUE_H}
-              text={p.display}
-              faceA={finish.faceA}
-              faceB={finish.faceB}
-              band={finish.band}
-              ink={finish.ink}
-              goldFace={finish.goldFace}
-              fontScale={0.85}
-              style={{ position: 'relative' }}
-            />
-          </div>
-        );
-      })}
+      {/* radiant burst + sparkles bloom at the transformation */}
+      {burstKey > 0 && <div key={burstKey} className="ws-radiant" style={{ left: centerX, top: centerY }} />}
+      {burstKey > 0 && <Sparkles key={`s${burstKey}`} x={centerX} y={centerY} seed={toStage * 97 + 13} />}
 
-      {/* old-hammer after-image lingering at center as the new one lands (beat2) */}
-      {beat === 2 && (
+      {/* blur-streak ghost trail during the spin (transform/opacity only) */}
+      {phase === 'spin' && [0.15, 0.3].map((delay, i) => (
         <div
-          className="ws-afterimage"
+          key={i}
           style={{
-            position: 'absolute',
-            left: centerX - oldRecipe.size / 2,
-            top: centerY - oldRecipe.size / 2,
-            width: oldRecipe.size,
-            height: oldRecipe.size * (160 / 120),
+            position: 'absolute', left: 0, top: 0,
+            width: recipe.size, height: hammerH,
+            transform: `translate(${centerX - recipe.size / 2}px, ${centerY - hammerH * 0.62}px)`,
+            opacity: 0.22 - i * 0.1,
             pointerEvents: 'none',
           }}
         >
-          <FlourishHammer recipe={oldRecipe} />
+          <div className="ws-hammer-spin" style={{ width: '100%', height: '100%', animationDelay: `${delay}s` }}>
+            <FlourishHammer recipe={recipe} />
+          </div>
         </div>
-      )}
+      ))}
 
-      {/* the hammer itself */}
+      {/* the hammer itself — dock pose matches the real Hammer for a seamless handoff */}
       <div
-        className={beat === 1 ? 'ws-hammer-shiver' : beat === 2 ? 'ws-hammer-spin' : undefined}
         style={{
-          position: 'absolute',
-          left: hammerX - recipe.size / 2,
-          top: hammerY - recipe.size / 2,
-          width: recipe.size,
-          height: recipe.size * (160 / 120),
+          position: 'absolute', left: 0, top: 0,
+          width: recipe.size, height: hammerH,
+          transform: `translate(${hammerX - recipe.size / 2}px, ${hammerY - hammerH * 0.62}px) rotate(${rot}deg)`,
+          transformOrigin: '50% 78%',
           filter:
-            beat >= 2
+            upgraded || phase === 'spin'
               ? 'drop-shadow(0 0 24px rgba(224,161,60,.9))'
-              : 'drop-shadow(0 6px 10px rgba(90,55,20,.35))',
-          transition: 'left 0.5s ease, top 0.5s ease',
+              : 'drop-shadow(0 8px 12px rgba(90,55,20,.35))',
+          transition: 'transform 0.5s ease, width 0.3s ease, height 0.3s ease',
         }}
       >
-        <FlourishHammer recipe={recipe} />
+        <div className={phase === 'spin' ? 'ws-hammer-spin' : undefined} style={{ width: '100%', height: '100%' }}>
+          <FlourishHammer recipe={recipe} />
+        </div>
       </div>
 
       {/* white flash at the moment of transformation */}
-      {beat === 2 && flashKey > 0 && <div key={flashKey} className="ws-white-flash" />}
-
-      {/* Beat 3 — confetti burst over the empty bench */}
-      {beat === 3 && <Confetti seed={toStage * 97 + 13} />}
-
-      {/* draw a strike burst at the bench when the confetti smash lands */}
-      {beat === 3 && (
-        <div
-          className="ws-burst"
-          style={{ left: TRAY_CENTER.x, top: TRAY_CENTER.y, width: 120, height: 120, border: `6px solid ${C.flashB}` }}
-        />
-      )}
+      {flashKey > 0 && <div key={flashKey} className="ws-white-flash" />}
     </div>
   );
 }

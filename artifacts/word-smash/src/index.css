@@ -222,37 +222,28 @@ html, body, #root {
   animation: ws-vignette-in 0.5s ease both;
 }
 
-/* level transition: earned plaque bow §8 beat1 */
-@keyframes ws-plaque-bow {
-  0% { transform: translate(var(--bx), var(--by)) rotate(0deg); }
-  30% { transform: translate(var(--bx), calc(var(--by) - 8px)) rotate(-8deg); }
-  60% { transform: translate(var(--bx), calc(var(--by) - 8px)) rotate(8deg); }
-  100% { transform: translate(var(--bx), var(--by)) rotate(0deg); }
-}
-.ws-plaque-bow { animation: ws-plaque-bow 0.7s ease-in-out both; }
-
-/* hammer anticipation shiver §8 beat1 */
-@keyframes ws-hammer-shiver {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(-3deg); }
-  75% { transform: rotate(3deg); }
-}
-.ws-hammer-shiver { animation: ws-hammer-shiver 0.14s linear infinite; transform-origin: 50% 90%; }
-
-/* hammer transform spin §8 beat2 */
+/* hammer transform spin §8 */
 @keyframes ws-hammer-spin {
   0% { transform: rotate(0deg) scale(1); }
   100% { transform: rotate(720deg) scale(1.15); }
 }
 .ws-hammer-spin { animation: ws-hammer-spin 0.9s cubic-bezier(.55,0,.9,.6) both; transform-origin: 50% 50%; }
 
-/* white flash §8 beat2 */
+/* white flash §8 */
 @keyframes ws-white-flash { 0% { opacity: 0.9; } 100% { opacity: 0; } }
 .ws-white-flash { position: absolute; inset: 0; background: #fff; pointer-events: none; animation: ws-white-flash 0.12s ease-out both; }
 
-/* old-hammer after-image dissolve §8 beat2 */
-@keyframes ws-afterimage { 0% { opacity: 0.5; transform: scale(1); } 100% { opacity: 0; transform: scale(1.3); } }
-.ws-afterimage { animation: ws-afterimage 0.4s ease-out both; }
+/* radiant upgrade burst §8 — warm glow that blooms out at the transform */
+@keyframes ws-radiant {
+  0% { transform: translate(-50%,-50%) scale(0.2); opacity: 0; }
+  25% { opacity: 0.95; }
+  100% { transform: translate(-50%,-50%) scale(2.4); opacity: 0; }
+}
+.ws-radiant {
+  position: absolute; width: 220px; height: 220px; border-radius: 50%; pointer-events: none; z-index: 855;
+  background: radial-gradient(closest-side, #fff3d6 0%, #ffd98f 45%, rgba(224,161,60,0) 72%);
+  animation: ws-radiant 0.6s ease-out both;
+}
 
 /* tutorial hand dust dissolve §9 */
 @keyframes ws-dust { 0% { opacity: 0.9; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-30px) scale(0.4); } }

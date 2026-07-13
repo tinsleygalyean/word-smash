@@ -59,13 +59,21 @@ Gameplay must contain zero text/emoji/mascot (the old "Level N" indicator was
 removed). The pre-game loading and hard-error shell screens still use minimal
 text — acceptable as fault/boot states, not gameplay.
 
-## Level-transition tap-skip window (§8)
-"~6s, tap-to-skip **after** beat 1" means skip is enabled ONLY during beats 2–3
-(recap beat 1 must always play in full). `LevelTransition` gates the overlay
-`pointerEvents` and the `skip()` handler on `beat >= 2`. Beat callbacks
-(`onPersist`/`onStartNext`/`onDone`) are ref-guarded and idempotent, so skip can
-fire them again safely.
-**Why:** a code review initially had the window inverted (skip during beats 0–1).
+## Level transition is a single hammer-upgrade sequence (reworked, supersedes §8)
+The DESIGN-SPEC §8 three-beat transition (earned-plaques recap + confetti
+practice-swing smash) was **deliberately cut** by user request. `LevelTransition`
+now runs ONE focused sequence: dim+spotlight → hammer hops dock→center → spins ×2
+(ghost blur streaks) → white flash lands the new stage (bigger+paint) + cymbal +
+haptic → radiant burst + sparkles → hammer returns to dock → next word revealed.
+Persist (`onPersist`) fires at the flash; `onStartNext` loads the next word during
+the return; `onDone` removes the overlay. All three callbacks are ref-guarded and
+idempotent; a tap anytime fast-forwards them all.
+**Why:** DESIGN-SPEC.md §8 is now OUT OF DATE for this flow — trust the code, not
+the spec, for the transition. No recap, no confetti, no tap-skip-window gating.
+**Gotcha:** the return-to-dock hammer MUST match the real `Hammer` dock pose
+exactly — `translate(x - w/2, y - h*0.62) rotate(-26deg)`, `transformOrigin
+50% 78%`, nested outer(position)/inner(spin) divs — or the handoff visibly pops
+when the overlay unmounts (the normal docked Hammer sits underneath).
 
 ## Wall drag-down replay resumes the sequence (does NOT restore in-progress work)
 §6/§8 line 74: "returns on completion, then the normal level sequence resumes."

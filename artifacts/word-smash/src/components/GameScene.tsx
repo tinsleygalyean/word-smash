@@ -23,7 +23,7 @@ import { Hammer } from './Hammer';
 import { Wall } from './Wall';
 import { ImpactFX, Sparkles, SoundRings } from './Effects';
 import { TutorialHand, type HandMode } from './TutorialHand';
-import { LevelTransition, type EarnedPlaque } from './LevelTransition';
+import { LevelTransition } from './LevelTransition';
 
 // ---------------------------------------------------------------------------
 // State
@@ -675,10 +675,7 @@ export function GameScene({ langPack, lang }: Props) {
     persist({ currentLevel: nextData ? nextLevel : st.currentLevel, completions: st.completions, hammerStage: nextData ? toStage : fromStage });
   }
   function transitionStartNext() {
-    // beat 3: real confetti strike on the empty bench + next level plaque drops in
-    playCrash();
-    try { navigator.vibrate?.(60); } catch { /* ignore */ }
-    setShakeKey((k) => k + 1);
+    // upgraded hammer has docked: load the next level's first word onto the bench
     const saved = getProgress(lang);
     startLevel(saved.currentLevel, saved.completions);
   }
@@ -781,13 +778,6 @@ export function GameScene({ langPack, lang }: Props) {
   const wallPlaques = state.replay
     ? state.plaques.filter((p) => p.wordId !== state.replay!.wordId)
     : state.plaques;
-
-  const earnedPlaques: EarnedPlaque[] = state.transition
-    ? state.transition.earnedWordIds
-        .map((id) => state.plaques.find((p) => p.wordId === id))
-        .filter((p): p is PlaqueState => !!p)
-        .map((p) => ({ wordId: p.wordId, display: p.display, x: p.x, y: p.y, levelsPlayed: p.levelsPlayed }))
-    : [];
 
   const showDemo = !!demo && (
     (demo.mode === 'dragPiece' && phase === 'rebuild') ||
@@ -911,11 +901,6 @@ export function GameScene({ langPack, lang }: Props) {
             <LevelTransition
               fromStage={state.transition.from}
               toStage={state.transition.to}
-              earned={earnedPlaques}
-              playWord={(wordId) => {
-                const w = findWord(langPack, wordId);
-                if (w) playWordNatural(w.audio.natural, w.display);
-              }}
               onPersist={transitionPersist}
               onStartNext={transitionStartNext}
               onDone={transitionDone}

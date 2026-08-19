@@ -20,5 +20,8 @@ export default defineConfig({
     outDir: path.resolve(import.meta.dirname, "dist/standalone"),
     emptyOutDir: true,
     assetsInlineLimit: 0,
+    // Module preload links cannot be resolved from file:// — drop the polyfill
+    // so no fetch() appears in the shipped bundle (TC-NFR-01).
+    modulePreload: { polyfill: false },
   },
 });

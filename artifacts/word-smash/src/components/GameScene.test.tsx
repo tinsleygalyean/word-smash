@@ -11,7 +11,8 @@ import { render, fireEvent, act } from '@testing-library/react';
 import { GameScene } from './GameScene';
 import { MINI_PACK } from '../test/fixtures';
 import { saveProgress, saveWordQueue, getProgress, type Progress } from '../game/storage';
-import { TRAY_CENTER, PIECE_GAP, unitWidth, WALL_H } from '../game/design';
+import type { PlaqueState } from '../game/types';
+import { TRAY_CENTER, PIECE_GAP, unitWidth, WALL_H, C } from '../game/design';
 import * as audio from '../game/audio';
 
 vi.mock('../game/audio', () => ({
@@ -342,6 +343,97 @@ describe('wall replay (TC-UI-06)', () => {
     fireEvent.pointerUp(plaque, { clientX: 300, clientY: 100, pointerId: 3 });
     expect(audio.playWordNatural).toHaveBeenCalledWith('audios/up_natural.mp3', 'up');
     expect(wallPlaqueEl(container, 'up')).toBeTruthy(); // still on the wall
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Wall plaque band color wiring — confirms finishForLevelCount is threaded
+// through to the rendered WallPlaque DOM element for levelsPlayed 1/2/3 and
+// that a replay session (already-completed level) does not visually advance
+// the band.
+// ---------------------------------------------------------------------------
+describe('wall plaque band color after multi-level play', () => {
+  /** Return the PlaqueFace inner div of a wall plaque (carries the boxShadow
+   *  that encodes the band color as an inset shadow). */
+  function wallPlaqueFaceEl(container: HTMLElement, text: string): HTMLElement | undefined {
+    const outer = wallPlaqueEl(container, text);
+    if (!outer) return undefined;
+    // PlaqueFace is the first child div inside the WallPlaque container div.
+    return (outer.querySelector('div') as HTMLElement) ?? undefined;
+  }
+
+  function plaqueRecord(levelsPlayed: number, highestLevel = levelsPlayed): PlaqueState {
+    return {
+      plaqueId: 'plq-up', wordId: 'up', display: 'up', units: ['u', 'p'],
+      x: 300, y: 100, zOrder: 1, playCount: levelsPlayed, highestLevel, levelsPlayed,
+    };
+  }
+
+  it('levelsPlayed:1 renders the red band on the wall plaque', () => {
+    saveProgress(LANG, baseProgress({ plaques: [plaqueRecord(1)] }));
+    saveWordQueue(LANG, 1, ['bee']);
+    const { container } = renderGame();
+
+    const face = wallPlaqueFaceEl(container, 'up');
+    expect(face, 'wall plaque face not found').toBeTruthy();
+    expect(face!.style.boxShadow).toContain(C.red);
+  });
+
+  it('levelsPlayed:2 renders the teal band on the wall plaque', () => {
+    saveProgress(LANG, baseProgress({ plaques: [plaqueRecord(2)] }));
+    saveWordQueue(LANG, 1, ['bee']);
+    const { container } = renderGame();
+
+    const face = wallPlaqueFaceEl(container, 'up');
+    expect(face, 'wall plaque face not found').toBeTruthy();
+    expect(face!.style.boxShadow).toContain(C.teal);
+  });
+
+  it('levelsPlayed:3 renders the gold band on the wall plaque', () => {
+    saveProgress(LANG, baseProgress({ plaques: [plaqueRecord(3)] }));
+    saveWordQueue(LANG, 1, ['bee']);
+    const { container } = renderGame();
+
+    const face = wallPlaqueFaceEl(container, 'up');
+    expect(face, 'wall plaque face not found').toBeTruthy();
+    expect(face!.style.boxShadow).toContain(C.gold);
+  });
+
+  it('replaying at an already-completed level keeps the existing band color (no advance)', () => {
+    // "up" has been completed at L1 (ghost) and L2 (no-ghost) → levelsPlayed:2 → teal.
+    saveProgress(LANG, baseProgress({
+      currentLevel: 1,
+      plaques: [plaqueRecord(2)],
+      completions: {
+        up_L1: { wordId: 'up', display: 'up', units: ['u', 'p'], ghostDone: true,  noGhostDone: false, highestLevel: 1, playCount: 1 },
+        up_L2: { wordId: 'up', display: 'up', units: ['u', 'p'], ghostDone: true,  noGhostDone: true,  highestLevel: 2, playCount: 2 },
+      },
+    }));
+    saveWordQueue(LANG, 1, ['bee']);
+    const { container } = renderGame();
+
+    // Drag the wall plaque down to the bench to start a replay.
+    const plaque = wallPlaqueEl(container, 'up')!;
+    fireEvent.pointerDown(plaque, { clientX: 300, clientY: 100, pointerId: 3 });
+    fireEvent.pointerMove(plaque, { clientX: 300, clientY: WALL_H + 150, pointerId: 3 });
+    fireEvent.pointerUp(plaque,   { clientX: 300, clientY: WALL_H + 150, pointerId: 3 });
+
+    // The replay session for "up" at level 2 is now in progress. Smash and seat.
+    smash(container);
+    const [s0, s1] = slotCenters(['u', 'p']);
+    dragPiece(container, 'u', s0, s0);
+    dragPiece(container, 'p', s1, s1);
+
+    // Advance past the full word-complete animation sequence:
+    //   250 ms (fuse) + 1050 ms (hop start) + 900 ms (flight + land) = ~2200 ms total.
+    advance(2200);
+
+    // The plaque is back on the wall.  Because up_L2 was already completed,
+    // isNewLevel=false so levelsPlayed stays at 2 → still teal, not gold.
+    const face = wallPlaqueFaceEl(container, 'up');
+    expect(face, 'wall plaque face not found after replay').toBeTruthy();
+    expect(face!.style.boxShadow).toContain(C.teal);
+    expect(face!.style.boxShadow).not.toContain(C.gold);
   });
 });
 

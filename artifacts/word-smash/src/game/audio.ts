@@ -68,7 +68,7 @@ function playBuffer(buffer: AudioBuffer, interrupt = true): void {
 // CRITICAL: units must be spoken as the SOUND the letter makes in the word
 // (/b/ = "buh"), never the letter NAME ("bee"). Real recorded MP3s (M3+)
 // must follow the same rule.
-const PHONEME_TTS: Record<string, string> = {
+export const PHONEME_TTS: Record<string, string> = {
   a: 'ah', e: 'eh', i: 'ih', o: 'aw', u: 'uh',
   b: 'buh', c: 'kuh', d: 'duh', f: 'fff', g: 'guh',
   h: 'hhh', j: 'juh', k: 'kuh', l: 'lll', m: 'mmm',
@@ -85,7 +85,7 @@ const PHONEME_TTS: Record<string, string> = {
   ze: 'zee', bra: 'bruh',         // zebra
 };
 
-function phonemeApprox(unit: string): string {
+export function phonemeApprox(unit: string): string {
   return PHONEME_TTS[unit.toLowerCase()] ?? unit;
 }
 

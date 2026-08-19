@@ -1,2 +1,3 @@
 - [Word Smash redesign](word-smash-redesign.md) — "Honey & Paint" reference-canvas architecture, phases, plaque identity, hammer evolution.
 - [Word Smash container packaging](word-smash-container-packaging.md) — Curious Reader spec: Layout A 2-tier, cr_event envelope, ZIP tiers, `-eng` token override.
+- [Word Smash test harness](word-smash-testing.md) — jsdom suite needs pinned 1200×540 rect, inert rAF, seeded word queues; structural element selectors.

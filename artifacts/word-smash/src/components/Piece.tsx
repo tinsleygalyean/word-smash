@@ -1,6 +1,6 @@
 import { useRef, type RefObject } from 'react';
 import type { PieceState } from '../game/types';
-import { PIECE_H, C, unitColorId, colorSet } from '../game/design';
+import { PIECE_H, C } from '../game/design';
 import { screenToStage } from '../game/coords';
 import { PlaqueFace } from './PlaqueFace';
 
@@ -8,6 +8,8 @@ interface Props {
   piece: PieceState;
   w: number;
   hint: boolean;
+  accentColor: string; // band / letter color — shared across all pieces of this word
+  accentInk: string;   // letter ink color
   stageRef: RefObject<HTMLDivElement | null>;
   onPickup: (id: string) => void;
   onMove: (id: string, x: number, y: number) => void;
@@ -15,10 +17,9 @@ interface Props {
   seatKey: number; // bump animation trigger when placed
 }
 
-export function Piece({ piece, w, hint, stageRef, onPickup, onMove, onDrop }: Props) {
+export function Piece({ piece, w, hint, accentColor, accentInk, stageRef, onPickup, onMove, onDrop }: Props) {
   const draggingRef = useRef(false);
   const grabOffset = useRef({ dx: 0, dy: 0 });
-  const cs = colorSet(unitColorId(piece.unitIndex));
 
   function down(e: React.PointerEvent) {
     if (piece.placed) return;
@@ -70,8 +71,8 @@ export function Piece({ piece, w, hint, stageRef, onPickup, onMove, onDrop }: Pr
         text={piece.unit}
         faceA={C.faceTop}
         faceB={C.faceBot}
-        band={cs.band}
-        ink={cs.letter}
+        band={accentColor}
+        ink={accentInk}
         className={piece.placed ? 'ws-seat' : undefined}
         style={{ position: 'relative' }}
       />

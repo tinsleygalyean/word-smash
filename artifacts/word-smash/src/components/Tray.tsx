@@ -1,5 +1,5 @@
 import type { SlotState } from '../game/types';
-import { PIECE_H, PIECE_RADIUS, C, unitColorId, colorSet } from '../game/design';
+import { PIECE_H, PIECE_RADIUS, C } from '../game/design';
 import { PlayButton } from './PlayButton';
 
 interface Props {
@@ -7,15 +7,15 @@ interface Props {
   ghost: boolean;               // ghost level → outline letters in recesses
   hintSlotIndex: number | null; // pulse this recess
   playingSlotIndex: number | null; // §4: this slot's ghost play button is speaking
+  accentColor: string;          // shared band color for all slots of this word
   onSlotPlay: (index: number) => void;
 }
 
 /** Routed recesses in the bench that receive the scattered pieces. */
-export function Tray({ slots, ghost, hintSlotIndex, playingSlotIndex, onSlotPlay }: Props) {
+export function Tray({ slots, ghost, hintSlotIndex, playingSlotIndex, accentColor, onSlotPlay }: Props) {
   return (
     <>
       {slots.map((slot) => {
-        const cs = colorSet(unitColorId(slot.index));
         const left = slot.x - slot.w / 2;
         const top = slot.y - PIECE_H / 2;
         const playing = playingSlotIndex === slot.index;
@@ -72,7 +72,7 @@ export function Tray({ slots, ghost, hintSlotIndex, playingSlotIndex, onSlotPlay
                     fontSize: Math.round(PIECE_H * 0.5),
                     letterSpacing: '0.04em',
                     color: 'transparent',
-                    WebkitTextStroke: `2px ${cs.band}`,
+                    WebkitTextStroke: `2px ${accentColor}`,
                     opacity: 0.55,
                   }}
                 >
@@ -85,7 +85,7 @@ export function Tray({ slots, ghost, hintSlotIndex, playingSlotIndex, onSlotPlay
               <PlayButton
                 x={slot.x}
                 y={slot.y}
-                color={cs.band}
+                color={accentColor}
                 pulse={hintSlotIndex === slot.index}
                 playing={playing}
                 onPlay={() => onSlotPlay(slot.index)}

@@ -12,7 +12,7 @@ import {
 import { emitWordCompleted, emitLevelCompleted, emitSummary } from '../game/events';
 import {
   STAGE_W, STAGE_H, WALL_H, BENCH_TOP, SAFE_LEFT, SAFE_RIGHT, TRAY_CENTER,
-  PIECE_H, PIECE_GAP, unitWidth, hammerStageForLevel,
+  PIECE_H, PIECE_GAP, unitWidth, hammerStageForLevel, finishForLevelCount,
 } from '../game/design';
 import { dist } from '../game/coords';
 import { Background } from './Background';
@@ -766,6 +766,18 @@ export function GameScene({ langPack, lang }: Props) {
   const ghostLevel = state.currentLevelData?.ghost ?? false;
   const hammerInteractive = (phase === 'present' || phase === 'rebuild') && !state.transition;
 
+  // Compute the finish color this word will earn when the current play completes.
+  // Uses the same levelsPlayed formula as onWordComplete so pieces / slots match
+  // the wall plaque that will land after the word is assembled.
+  const wordFinish = (() => {
+    if (!state.currentWord) return finishForLevelCount(1);
+    const existingPlaque = state.plaques.find((p) => p.wordId === state.currentWord!.id);
+    const existingComp = state.completions[`${state.currentWord.id}_L${state.currentLevel}`];
+    const isNewLevel = !existingComp;
+    const levelsPlayed = Math.max(1, (existingPlaque?.levelsPlayed ?? 0) + (isNewLevel ? 1 : 0));
+    return finishForLevelCount(levelsPlayed);
+  })();
+
   const hintSlot = state.hint?.type === 'slot' ? state.hint.slotIndex ?? null : null;
   const hintPieceId = (() => {
     if (state.hint?.type !== 'piece') return null;
@@ -817,6 +829,7 @@ export function GameScene({ langPack, lang }: Props) {
               ghost={ghostLevel}
               hintSlotIndex={hintSlot}
               playingSlotIndex={playingSlot}
+              accentColor={wordFinish.band}
               onSlotPlay={(idx) => {
                 const s = state.slots[idx];
                 if (!s) return;
@@ -847,6 +860,8 @@ export function GameScene({ langPack, lang }: Props) {
               piece={p}
               w={state.slots[p.unitIndex]?.w ?? unitWidth(p.unit)}
               hint={hintPieceId === p.id}
+              accentColor={wordFinish.band}
+              accentInk={wordFinish.ink}
               stageRef={stageRef}
               onPickup={onPickup}
               onMove={onMove}
@@ -866,7 +881,7 @@ export function GameScene({ langPack, lang }: Props) {
               }}
             >
               <div className={flying.hop ? 'ws-hop' : undefined}>
-                <FlyingFace text={flying.text} w={flying.w} shrink={!flying.hop} />
+                <FlyingFace text={flying.text} w={flying.w} shrink={!flying.hop} band={wordFinish.band} ink={wordFinish.ink} />
               </div>
             </div>
           )}
@@ -921,7 +936,7 @@ function findWord(pack: LangPack, wordId: string): Word | null {
   return null;
 }
 
-function FlyingFace({ text, w, shrink }: { text: string; w: number; shrink: boolean }) {
+function FlyingFace({ text, w, shrink, band, ink }: { text: string; w: number; shrink: boolean; band: string; ink: string }) {
   const scale = shrink ? 0.62 : 1;
   return (
     <div style={{ transform: `scale(${scale})`, transformOrigin: 'center', transition: 'transform 0.85s cubic-bezier(.34,.9,.4,1)' }}>
@@ -929,11 +944,11 @@ function FlyingFace({ text, w, shrink }: { text: string; w: number; shrink: bool
         style={{
           width: w, height: PIECE_H, borderRadius: 16,
           background: 'linear-gradient(170deg, #faeed2 0%, #f2e0b8 100%)',
-          boxShadow: '0 8px 14px rgba(90,55,20,.32), inset 0 2px 2px rgba(255,255,255,.7), inset 0 -11px 0 #c9553e',
+          boxShadow: `0 8px 14px rgba(90,55,20,.32), inset 0 2px 2px rgba(255,255,255,.7), inset 0 -11px 0 ${band}`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}
       >
-        <span style={{ fontFamily: "'Fredoka', system-ui, sans-serif", fontWeight: 600, fontSize: Math.round(PIECE_H * 0.52), color: '#c9553e', marginBottom: 6 }}>{text}</span>
+        <span style={{ fontFamily: "'Fredoka', system-ui, sans-serif", fontWeight: 600, fontSize: Math.round(PIECE_H * 0.52), color: ink, marginBottom: 6 }}>{text}</span>
       </div>
     </div>
   );

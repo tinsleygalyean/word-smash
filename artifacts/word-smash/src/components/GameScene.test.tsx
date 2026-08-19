@@ -601,6 +601,61 @@ describe('tutorial hand — rebuild drag demo (TC-UI-09)', () => {
 });
 
 // ---------------------------------------------------------------------------
+// TC-UI-09 — Tutorial hand: holdThrough demo after two consecutive early-releases.
+// Covers: no hand after first release, hand after second release, firedOnce guard.
+// ---------------------------------------------------------------------------
+describe('tutorial hand — holdThrough demo after two early-releases (TC-UI-09)', () => {
+  function tutSvg(container: HTMLElement): Element | null {
+    return container.querySelector('path#ws-tut-path');
+  }
+
+  /**
+   * Simulate one "early release" on the hammer: wind up then let go before the
+   * commit point, returning the phase to 'present' and incrementing the
+   * earlyRelease counter for the current word.
+   */
+  function earlyReleaseSwing(container: HTMLElement) {
+    const h = hammerEl(container);
+    fireEvent.pointerDown(h, { clientX: HAMMER_DOCK.x, clientY: HAMMER_DOCK.y, pointerId: 1 });
+    fireEvent.pointerMove(h, { clientX: TRAY_CENTER.x, clientY: TRAY_CENTER.y, pointerId: 1 });
+    advance(200); // well before the 620+150 ms commit point
+    fireEvent.pointerUp(h, { clientX: TRAY_CENTER.x, clientY: TRAY_CENTER.y, pointerId: 1 });
+    advance(50);  // let the WINDUP_CANCEL dispatch flush
+  }
+
+  beforeEach(() => {
+    saveProgress(LANG, baseProgress()); // hammerDone: true — no first-run hand
+    saveWordQueue(LANG, 1, ['up', 'bee']);
+  });
+
+  it('no holdThrough hand after exactly one early-release', () => {
+    const { container } = renderGame();
+    earlyReleaseSwing(container);
+    expect(tutSvg(container)).toBeNull();
+  });
+
+  it('holdThrough hand appears after a second early-release on the same word', () => {
+    const { container } = renderGame();
+    earlyReleaseSwing(container); // first abandoned swing
+    expect(tutSvg(container)).toBeNull();
+    earlyReleaseSwing(container); // second abandoned swing — trigger
+    expect(tutSvg(container)).not.toBeNull();
+  });
+
+  it('holdThrough hand fires only once per word (firedOnce guard)', () => {
+    const { container } = renderGame();
+    earlyReleaseSwing(container);
+    earlyReleaseSwing(container); // fires, demo visible
+    expect(tutSvg(container)).not.toBeNull();
+    advance(4000); // auto-dismiss timer (showDemoAuto called with 4000 ms)
+    expect(tutSvg(container)).toBeNull();
+    // A third early-release must NOT re-show the hand for the same word
+    earlyReleaseSwing(container);
+    expect(tutSvg(container)).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
 // TC-UI-08 — CRITICAL GUARD: no text/emoji/mascot anywhere in gameplay.
 // Every rendered text node must be pack content (a word or unit being taught).
 // ---------------------------------------------------------------------------

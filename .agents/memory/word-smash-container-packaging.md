@@ -56,12 +56,25 @@ and drives the CMS MCP tools in order: `list_inventory` → `upload_core_game`
 `StreamableHTTPClientTransport` (stateless POST `<server>/mcp`, `Authorization:
 Bearer`). Full guide + exact args in `artifacts/word-smash/UPLOAD.md`.
 
-**Why dry-run matters:** creds (`CR_CMS_SERVER_URL`, `CR_MCP_API_KEY`) come from
-the Curious Learning team and are NOT in secrets yet, so live upload/promotion is
-externally blocked. The script reads creds from env only and no-ops with a clear
-dry-run message when absent — never hard-code them. `promote_content` is
-CL-staff-only; the script only surfaces item IDs.
+**Why dry-run matters:** CMS credentials may not be present in every workspace
+or runtime. The script reads them from env only and no-ops with a clear dry-run
+message when absent — never hard-code them. `promote_content` requires an
+edit-scoped token; upload-only tokens can create development releases but cannot
+promote them.
 
 **How to apply:** both `--lang english` and pnpm's `-- --lang english`
 passthrough work (the parser skips a literal `--`) — same operator-confusion fix
 the packager needed.
+
+## Development-only release boundary
+
+Word Smash release automation uploads new engine and language-pack versions,
+then verifies the development inventory and stops. It must never promote content
+or invoke a production Publish action.
+
+**Why:** a human needs to inspect and test the assembled tile in the Curious
+Reader CMS before making a production-release decision.
+
+**How to apply:** use the uploader for a new engine version or a configured
+language pack only. Hand off the development tile to Curious Learning for
+review; promotion and final Publish remain deliberate human-only actions.

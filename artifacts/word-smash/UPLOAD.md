@@ -1,8 +1,10 @@
 # Word Smash — Curious Reader upload guide
 
 How to upload Word Smash to the Curious Reader CMS through its **MCP endpoint**
-(third-party game spec §8). Word Smash is a **Layout A (2-tier)** title: an
-engine tier plus one language tier, **no core level**.
+(third-party game spec §8). This is a **development-only** process: it uploads
+an engine version and one language pack for human review, then stops. Word Smash
+is a **Layout A (2-tier)** title: an engine tier plus one language tier, **no
+core level**.
 
 ## What you need from the Curious Learning team (external prerequisites)
 
@@ -47,7 +49,12 @@ The script, in one flow:
 1. regenerates the container ZIPs via the Phase-1 packager
    (`wordsmash-eng.zip` + `wordsmash-lang-<code>.zip` in `dist/container/`),
 2. base64-encodes the two ZIPs and the tile icon, and
-3. drives the four CMS MCP tools in order and prints the results.
+3. uploads the engine and language ZIPs through chunked MCP sessions (with a
+   SHA-256 integrity check), then verifies the development inventory.
+
+It intentionally **does not call** `promote_content`, `update_manifest`, or any
+production Publish action. A Curious Learning reviewer must test the assembled
+development tile and decide whether to promote it later.
 
 ## The MCP sequence and exact Word Smash arguments
 
@@ -55,7 +62,10 @@ Server: `POST <CR_CMS_SERVER_URL>/mcp` (Streamable HTTP, stateless), name
 `curious-reader-cms`. Tools called in order:
 
 1. **`list_inventory`** — `{}` (survey before upload).
-2. **`upload_core_game`** — the engine tier:
+2. **`begin_upload` + `upload_chunk`** — create an engine upload session using
+   `{ filename: "wordsmash-eng.zip", totalSize }`, then append sequential
+   `{ uploadId, chunkIndex, dataBase64 }` chunks.
+3. **`upload_core_game`** — consume the completed engine session:
    | arg | value |
    |---|---|
    | `engineSlug` | `wordsmash` |
@@ -63,8 +73,13 @@ Server: `POST <CR_CMS_SERVER_URL>/mcp` (Streamable HTTP, stateless), name
    | `urlTemplate` | `https://wordsmash.curiouslearning.org/?cr_lang={lang}` (query is what matters; override via `CR_URL_TEMPLATE`) |
    | `hasCoreLevel` | `false` (Layout A) |
    | `filename` | `wordsmash-eng.zip` |
-   | `zipBase64` | base64 of the engine ZIP |
-3. **`upload_language_pack`** — the language tier + tile icon:
+   | `uploadId` | ID returned by `begin_upload` after all engine chunks arrive |
+   | `sha256` | SHA-256 hex digest of the local engine ZIP |
+4. **`begin_upload` + `upload_chunk`** — create a language upload session using
+   `{ filename: "wordsmash-lang-english.zip", totalSize }`, then append its
+   sequential chunks.
+5. **`upload_language_pack`** — consume the completed language session and add
+   the tile icon:
    | arg | value |
    |---|---|
    | `engineSlug` | `wordsmash` |
@@ -73,10 +88,12 @@ Server: `POST <CR_CMS_SERVER_URL>/mcp` (Streamable HTTP, stateless), name
    | `displayNameNative` | `English` |
    | `languageInEnglishName` | `English` |
    | `filename` | `wordsmash-lang-english.zip` |
-   | `zipBase64` | base64 of the language ZIP |
+   | `uploadId` | ID returned by `begin_upload` after all language chunks arrive |
+   | `sha256` | SHA-256 hex digest of the local language ZIP |
    | `iconBase64` | base64 of `upload/wordsmash-icon-512.png` |
-4. **`list_inventory`** — `{}` again; confirm the engine and English pack now
-   appear with status `development`.
+6. **`list_inventory`** — `{}` again. The script fails unless the exact item IDs
+   returned by both upload calls appear with the expected filenames, engine,
+   language, icon, and `development` status.
 
 The script prints the returned **item IDs** for the engine and language pack.
 
@@ -89,7 +106,7 @@ The script prints the returned **item IDs** for the engine and language pack.
 - The icon is uploaded **alongside** the language pack (`iconBase64`); it is
   **never** packed inside a ZIP.
 
-## Verify, then promotion (staff-only)
+## Verify in development, then stop
 
 After upload, confirm the items landed:
 
@@ -99,10 +116,11 @@ After upload, confirm the items landed:
   `GET <CR_CMS_SERVER_URL>/api/manifest?channel=development` — the Word Smash
   tile should list its `eng` + `lang-english` ZIPs.
 
-**Promotion to production (`promote_content`) is Curious-Learning-staff-only.**
-This script does not promote; it surfaces the item IDs for CL staff to promote
-(engine first, then the language pack). A tile appears on devices only once all
-of its tiers have a production version.
+The uploader stops here. **Do not promote or publish automatically.** A Curious
+Learning reviewer must test the development tile in the CMS before any authorized
+person makes a later, deliberate decision to promote it. Production devices
+remain unchanged until a human promotes all tiers and completes the separate CMS
+Publish action.
 
 ## Adding more languages later
 

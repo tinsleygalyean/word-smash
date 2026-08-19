@@ -268,7 +268,10 @@ export function GameScene({ langPack, lang }: Props) {
     showRings(TRAY_CENTER.x, TRAY_CENTER.y);
   }
 
-  const startLevel = useCallback((levelNum: number, completions: Record<string, WordCompletion>) => {
+  // tutorialOverride lets the initial mount pass the persisted hammerDone flag
+  // before the LOAD dispatch has been committed to stateRef (stateRef still
+  // holds initialState during the first useEffect run).
+  const startLevel = useCallback((levelNum: number, completions: Record<string, WordCompletion>, tutorialOverride?: TutorialFlags) => {
     const levelData = getLevelData(levelNum);
     if (!levelData) return;
     preloadLevel(levelData.words);
@@ -284,14 +287,14 @@ export function GameScene({ langPack, lang }: Props) {
     dispatch({ type: 'START_WORD', word, levelData, queue, pieces, slots, plaqueW, levelStart: true });
     advanceTimer.current.push(setTimeout(() => playWordSlowCued(), 650));
     resetHintTimer();
-    schedulePresentDemo(word.id);
+    schedulePresentDemo(word.id, tutorialOverride);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getLevelData, lang]);
 
   useEffect(() => {
     const saved = getProgress(lang);
     dispatch({ type: 'LOAD', p: saved });
-    startLevel(saved.currentLevel, saved.completions);
+    startLevel(saved.currentLevel, saved.completions, saved.tutorial);
     return () => {
       if (hintTimer.current) clearTimeout(hintTimer.current);
       if (ringTimer.current) clearTimeout(ringTimer.current);
@@ -337,10 +340,12 @@ export function GameScene({ langPack, lang }: Props) {
     setDemo(d);
     demoTimers.current.push(setTimeout(() => setDemo((cur) => (cur === d ? null : cur)), autoMs));
   }
-  function schedulePresentDemo(wordId: string) {
+  function schedulePresentDemo(wordId: string, tutorialOverride?: TutorialFlags) {
     clearDemoTimers();
-    const st = stateRef.current;
-    if (!st.tutorial.hammerDone) {
+    // Use the override when provided (e.g. at mount, before LOAD has committed
+    // to stateRef), otherwise fall back to the live ref value.
+    const hammerDone = tutorialOverride ? tutorialOverride.hammerDone : stateRef.current.tutorial.hammerDone;
+    if (!hammerDone) {
       // first-run: persistent demonstrating hand over the hammer
       setDemo({ mode: 'hammer' });
       return;

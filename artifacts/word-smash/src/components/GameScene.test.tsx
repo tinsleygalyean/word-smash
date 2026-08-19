@@ -438,6 +438,169 @@ describe('wall plaque band color after multi-level play', () => {
 });
 
 // ---------------------------------------------------------------------------
+// TC-UI-09 — Tutorial hand: first-run persistent hand + idle/stuck triggers.
+// ---------------------------------------------------------------------------
+describe('tutorial hand — first-run persistent hand (TC-UI-09)', () => {
+  /** Find the TutorialHand SVG (or null if not present). */
+  function tutSvg(container: HTMLElement): Element | null {
+    return container.querySelector('path#ws-tut-path');
+  }
+
+  it('hand appears immediately on first load when hammerDone is false', () => {
+    // No hammerDone flag → schedulePresentDemo sets a persistent hammer demo
+    saveProgress(LANG, { ...baseProgress(), tutorial: { hammerDone: false } });
+    saveWordQueue(LANG, 1, ['up', 'bee']);
+    const { container } = renderGame();
+    expect(tutSvg(container)).not.toBeNull();
+  });
+
+  it('hand is NOT present when hammerDone is already true (veteran player)', () => {
+    saveProgress(LANG, baseProgress()); // baseProgress has hammerDone: true
+    saveWordQueue(LANG, 1, ['up', 'bee']);
+    const { container } = renderGame();
+    expect(tutSvg(container)).toBeNull();
+  });
+
+  it('hammerDone is NOT persisted to localStorage before the first smash', () => {
+    saveProgress(LANG, { ...baseProgress(), tutorial: { hammerDone: false } });
+    saveWordQueue(LANG, 1, ['up', 'bee']);
+    renderGame();
+    // Just mounting is not enough — no smash has happened
+    const stored = getProgress(LANG);
+    expect(stored.tutorial?.hammerDone).toBeFalsy();
+  });
+
+  it('hammerDone IS persisted to localStorage only after the first completed smash', () => {
+    saveProgress(LANG, { ...baseProgress(), tutorial: { hammerDone: false } });
+    saveWordQueue(LANG, 1, ['up', 'bee']);
+    const { container } = renderGame();
+    // Pre-smash: not persisted
+    expect(getProgress(LANG).tutorial?.hammerDone).toBeFalsy();
+    smash(container);
+    // Post-smash: persisted
+    expect(getProgress(LANG).tutorial?.hammerDone).toBe(true);
+  });
+
+  it('hand disappears after the first smash (phase is rebuild; hammer mode hidden in rebuild)', () => {
+    saveProgress(LANG, { ...baseProgress(), tutorial: { hammerDone: false } });
+    saveWordQueue(LANG, 1, ['up', 'bee']);
+    const { container } = renderGame();
+    expect(tutSvg(container)).not.toBeNull(); // visible before smash
+    smash(container);
+    expect(tutSvg(container)).toBeNull();     // hidden after smash (rebuild phase)
+  });
+});
+
+// ---------------------------------------------------------------------------
+describe('tutorial hand — idle-timer triggers (TC-UI-09)', () => {
+  function tutSvg(container: HTMLElement): Element | null {
+    return container.querySelector('path#ws-tut-path');
+  }
+
+  beforeEach(() => {
+    saveProgress(LANG, baseProgress()); // hammerDone: true — skip first-run hand
+    saveWordQueue(LANG, 1, ['up', 'bee']);
+  });
+
+  it('no idle hand before 10 s have elapsed (present phase, unsmashed plaque)', () => {
+    const { container } = renderGame();
+    advance(9999);
+    expect(tutSvg(container)).toBeNull();
+  });
+
+  it('idle hammer hand appears after 10 s of inactivity on an unsmashed plaque', () => {
+    const { container } = renderGame();
+    advance(10000);
+    expect(tutSvg(container)).not.toBeNull();
+  });
+
+  it('idle hammer hand auto-dismisses after 4.8 s and is gone', () => {
+    const { container } = renderGame();
+    advance(10000);       // trigger
+    expect(tutSvg(container)).not.toBeNull();
+    advance(4800);        // auto-dismiss timer expires
+    expect(tutSvg(container)).toBeNull();
+  });
+
+  it('idle hand fires at most once per word (firedOnce guard)', () => {
+    const { container } = renderGame();
+    advance(10000);       // first trigger
+    advance(4800);        // auto-dismissed
+    // A second 10-second wait must NOT re-show the hand for the same word
+    advance(10000);
+    expect(tutSvg(container)).toBeNull();
+  });
+
+  it('idle hand does NOT appear when the word has already been smashed (wordSmashes > 0)', () => {
+    const { container } = renderGame();
+    smash(container);            // phase → rebuild, wordSmashes = 1
+    // Advance past the 10s idle check; the check requires wordSmashes === 0
+    advance(10000);
+    expect(tutSvg(container)).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+describe('tutorial hand — rebuild drag demo (TC-UI-09)', () => {
+  function tutSvg(container: HTMLElement): Element | null {
+    return container.querySelector('path#ws-tut-path');
+  }
+
+  beforeEach(() => {
+    saveProgress(LANG, baseProgress());
+    saveWordQueue(LANG, 1, ['up', 'bee']);
+  });
+
+  it('no dragPiece demo before 15 s of scatter (rebuild, nothing placed)', () => {
+    // smash() itself advances ~950 ms of fake time; the 15 s rebuild-demo
+    // timer starts from when doStrike runs (inside that advance).  Use a
+    // conservative 10 s advance so we are clearly short of the 15 s mark.
+    const { container } = renderGame();
+    smash(container);
+    advance(10000);
+    expect(tutSvg(container)).toBeNull();
+  });
+
+  it('dragPiece demo appears 15 s after scatter when nothing has been placed', () => {
+    // Advance 16 s after smash: total fake-clock > 15 s from doStrike.
+    const { container } = renderGame();
+    smash(container);
+    advance(16000);
+    expect(tutSvg(container)).not.toBeNull();
+  });
+
+  it('dragPiece demo auto-dismisses after 5.4 s', () => {
+    const { container } = renderGame();
+    smash(container);
+    advance(16000);
+    expect(tutSvg(container)).not.toBeNull();
+    advance(5400);
+    expect(tutSvg(container)).toBeNull();
+  });
+
+  it('dragPiece demo does NOT appear when a piece has already been seated', () => {
+    const { container } = renderGame();
+    smash(container);
+    const [s0] = slotCenters(['u', 'p']);
+    dragPiece(container, 'u', s0, s0); // seat one piece
+    advance(16000);
+    expect(tutSvg(container)).toBeNull();
+  });
+
+  it('dragPiece demo fires at most once per word even after a re-smash', () => {
+    const { container } = renderGame();
+    smash(container);
+    advance(16000);   // fires and marks firedOnce('up', 'dragPiece')
+    advance(5400);    // auto-dismissed
+    // Re-smash clears demo timers and schedules another 15-s check, but
+    // firedOnce should prevent it from firing again for the same word
+    smash(container);
+    advance(16000);
+    expect(tutSvg(container)).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
 // TC-UI-08 — CRITICAL GUARD: no text/emoji/mascot anywhere in gameplay.
 // Every rendered text node must be pack content (a word or unit being taught).
 // ---------------------------------------------------------------------------

@@ -6,6 +6,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, fireEvent, act } from '@testing-library/react';
 import { LevelTransition } from './LevelTransition';
+import { HAMMER_STAGES } from '../game/design';
 
 vi.mock('../game/audio', () => ({
   playFoley: vi.fn(),
@@ -148,6 +149,37 @@ describe('tap-to-skip (TC-UI-10)', () => {
     expect(onPersist).toHaveBeenCalledTimes(1);
     expect(onStartNext).toHaveBeenCalledTimes(1);
     expect(onDone).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Helper: find the main hammer div (carries data-hammer-size).
+function hammerSize(container: HTMLElement): string {
+  const el = container.querySelector('[data-hammer-size]');
+  if (!el) throw new Error('data-hammer-size element not found');
+  return (el as HTMLElement).dataset.hammerSize!;
+}
+
+// ---------------------------------------------------------------------------
+describe('rendered hammer stage (TC-UI-10 visual state)', () => {
+  it('before PERSIST_MS the overlay renders the fromStage hammer', () => {
+    const { container } = mountTransition({ fromStage: 0, toStage: 1 });
+    advance(PERSIST_MS - 1);
+    expect(hammerSize(container)).toBe(String(HAMMER_STAGES[0].size));
+  });
+
+  it('after PERSIST_MS the overlay switches to the toStage hammer', () => {
+    const { container } = mountTransition({ fromStage: 0, toStage: 1 });
+    advance(PERSIST_MS);
+    expect(hammerSize(container)).toBe(String(HAMMER_STAGES[1].size));
+  });
+
+  it('tap-to-skip leaves the overlay showing the toStage hammer', () => {
+    const { container } = mountTransition({ fromStage: 0, toStage: 1 });
+    // Skip before the flash would naturally fire
+    advance(HOP_MS + 1);
+    fireEvent.pointerDown(container.firstElementChild!);
+    expect(hammerSize(container)).toBe(String(HAMMER_STAGES[1].size));
   });
 });
 

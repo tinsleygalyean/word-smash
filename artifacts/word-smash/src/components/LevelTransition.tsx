@@ -78,6 +78,7 @@ export function LevelTransition({ fromStage, toStage, onPersist, onStartNext, on
   function skip() {
     timers.current.forEach(clearTimeout);
     timers.current = [];
+    setPhase('return'); // ensure the upgraded (toStage) hammer is shown
     goPersist();
     goNext();
     goDone();
@@ -129,6 +130,7 @@ export function LevelTransition({ fromStage, toStage, onPersist, onStartNext, on
 
       {/* the hammer itself — dock pose matches the real Hammer for a seamless handoff */}
       <div
+        data-hammer-size={recipe.size}
         style={{
           position: 'absolute', left: 0, top: 0,
           width: recipe.size, height: hammerH,

@@ -1,0 +1,65 @@
+# Word Smash
+
+An offline literacy web game for children ages 4–8 built for Curious Learning's Curious Reader container (offline-first Android/iOS WebView from `file://`). Children smash words with a hammer, scatter letter tiles, then drag them back to rebuild the word.
+
+## Run & Operate
+
+- `pnpm --filter @workspace/word-smash run dev` — run the game (port 23518, preview at `/`)
+- `pnpm --filter @workspace/word-smash run package:container` — build the Curious Reader upload ZIPs (`--lang <code>`, default `english`) into `artifacts/word-smash/dist/container/`
+- `pnpm --filter @workspace/scripts run upload:wordsmash` — regenerate the ZIPs and upload them through the Curious Reader CMS MCP endpoint (`--lang <code>`; dry-runs unless `CR_CMS_SERVER_URL` + `CR_MCP_API_KEY` are set). See `artifacts/word-smash/UPLOAD.md`.
+- `pnpm --filter @workspace/api-server run dev` — run the API server (port 8080)
+- `pnpm run typecheck` — full typecheck across all packages
+
+## Stack
+
+- pnpm workspaces, Node.js 24, TypeScript 5.9
+- Game: React 19 + Vite (react-vite artifact at `/`)
+- No backend needed for the game — pure client-side with localStorage
+- Audio: Web Audio API foley + Web Speech API TTS fallback (ElevenLabs MP3s deferred to M2)
+- Persistence: localStorage (progress, plaques, hammer stage)
+
+## Where things live
+
+- `artifacts/word-smash/` — the game itself (react-vite artifact)
+  - `src/game/` — core engine: types, audio, storage, events, physics
+  - `src/components/` — React game components
+  - `public/lang/english/wordsmash.json` — authoritative 10-level English language pack
+  - `upload/wordsmash-icon-512.png` — true-PNG 512×512 tile icon (uploaded as `iconBase64`; never packed in a ZIP)
+  - `DECISIONS.md` — architecture decisions and offline constraints
+  - `UPLOAD.md` — Curious Reader CMS MCP upload guide (sequence, exact args, prerequisites)
+- `scripts/src/upload-wordsmash.ts` (`@workspace/scripts`) — the MCP uploader driving `list_inventory` → `upload_core_game` → `upload_language_pack`
+- `artifacts/api-server/` — unused for M1, available for future leaderboard/analytics
+
+## Architecture decisions
+
+- All binaries (audio, JSON) loaded via `loadBinary()` XHR — required for `file://` offline WebView
+- Game state in a single `useReducer` in `GameScene.tsx`; side effects (audio, localStorage) called imperatively in handlers, never in the reducer
+- Audio: tries XHR → AudioBuffer; falls back to `speechSynthesis.speak()` for dev (no real MP3 files in M1); foley synthesised via Web Audio oscillators
+- Fonts: Google Fonts CDN at dev time; must be bundled as WOFF2 via FontFace ArrayBuffer for M2 offline APK
+- cr_event bridge: `window.ReactNativeWebView?.postMessage()` — silent no-op outside Curious Reader container
+
+## Product
+
+M1 (complete): English levels 1–4 playable — ghost-letter and no-ghost word groups (2-phoneme digraph words, CVC words). Hammer smash, scatter, drag-to-rebuild, plaque wall, hammer evolution, localStorage persistence, tutorial hand icon.
+
+M2 (complete): Phoneme-sound TTS (says /b/ "buh", never letter names), level indicator fix, self-hosted WOFF2 font via FontFace ArrayBuffer, `vite.standalone.config.ts` (`build:standalone` → `dist/standalone/`, base `./`) for the offline APK bundle, levels 5–10 playable.
+
+Redesign ("Honey & Paint", complete): Full visual + interaction redesign to the approved contract in `attached_assets/word_smash_design/handoff/DESIGN-SPEC.md`. Fixed 1200×540 reference canvas, cover-scaled to the device; all geometry in reference coords. No text/emoji/mascot in gameplay. Phases: loading→present→windup→rebuild→complete→levelComplete. 10-stage hammer evolution, plaque wall with drag-to-replay and replay-count finishes.
+
+M3 (complete): Real recorded MP3 audio via ElevenLabs TTS at `public/lang/english/audios/` (144 files: word slow/natural + per-word phoneme/syllable units). Synthesised from phonetic spellings (b→"buh", never "b") so letter names can never be spoken; vowels/ambiguous letters spelled per word context. Web Speech TTS is now a fallback only. `resolveAudioPaths()` in `App.tsx` fixes relative audio-path resolution for both dev and the offline bundle.
+
+## User preferences
+
+_Populate as you build._
+
+## Gotchas
+
+- Do NOT use `fetch()`, `<audio>`, or CDN script tags — offline WebView blocks them. Use `loadBinary()` XHR for all external assets.
+- `file://` XHR returns status 0 on success (not 200) — the JSON/binary loaders already handle this.
+- Run `pnpm run typecheck` from workspace root before testing — leaf artifact typechecks need fresh lib declarations.
+- Google Fonts `@import` in CSS works for dev but must be replaced with self-hosted WOFF2 for the offline APK build.
+
+## Pointers
+
+- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- See `artifacts/word-smash/DECISIONS.md` for detailed architecture decisions

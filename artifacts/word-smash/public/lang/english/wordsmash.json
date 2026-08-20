@@ -1,0 +1,665 @@
+{
+  "langCode": "english",
+  "levels": [
+    {
+      "level": 1,
+      "ghost": true,
+      "words": [
+        {
+          "id": "up",
+          "display": "up",
+          "units": ["u", "p"],
+          "audio": {
+            "slow": "audios/up_slow.mp3",
+            "natural": "audios/up_natural.mp3",
+            "units": ["audios/up_u.mp3", "audios/up_p.mp3"]
+          }
+        },
+        {
+          "id": "in",
+          "display": "in",
+          "units": ["i", "n"],
+          "audio": {
+            "slow": "audios/in_slow.mp3",
+            "natural": "audios/in_natural.mp3",
+            "units": ["audios/in_i.mp3", "audios/in_n.mp3"]
+          }
+        },
+        {
+          "id": "egg",
+          "display": "egg",
+          "units": ["e", "gg"],
+          "audio": {
+            "slow": "audios/egg_slow.mp3",
+            "natural": "audios/egg_natural.mp3",
+            "units": ["audios/egg_e.mp3", "audios/egg_gg.mp3"]
+          }
+        },
+        {
+          "id": "bee",
+          "display": "bee",
+          "units": ["b", "ee"],
+          "audio": {
+            "slow": "audios/bee_slow.mp3",
+            "natural": "audios/bee_natural.mp3",
+            "units": ["audios/bee_b.mp3", "audios/bee_ee.mp3"]
+          }
+        },
+        {
+          "id": "sea",
+          "display": "sea",
+          "units": ["s", "ea"],
+          "audio": {
+            "slow": "audios/sea_slow.mp3",
+            "natural": "audios/sea_natural.mp3",
+            "units": ["audios/sea_s.mp3", "audios/sea_ea.mp3"]
+          }
+        },
+        {
+          "id": "zoo",
+          "display": "zoo",
+          "units": ["z", "oo"],
+          "audio": {
+            "slow": "audios/zoo_slow.mp3",
+            "natural": "audios/zoo_natural.mp3",
+            "units": ["audios/zoo_z.mp3", "audios/zoo_oo.mp3"]
+          }
+        }
+      ]
+    },
+    {
+      "level": 2,
+      "ghost": false,
+      "words": [
+        {
+          "id": "up",
+          "display": "up",
+          "units": ["u", "p"],
+          "audio": {
+            "slow": "audios/up_slow.mp3",
+            "natural": "audios/up_natural.mp3",
+            "units": ["audios/up_u.mp3", "audios/up_p.mp3"]
+          }
+        },
+        {
+          "id": "in",
+          "display": "in",
+          "units": ["i", "n"],
+          "audio": {
+            "slow": "audios/in_slow.mp3",
+            "natural": "audios/in_natural.mp3",
+            "units": ["audios/in_i.mp3", "audios/in_n.mp3"]
+          }
+        },
+        {
+          "id": "egg",
+          "display": "egg",
+          "units": ["e", "gg"],
+          "audio": {
+            "slow": "audios/egg_slow.mp3",
+            "natural": "audios/egg_natural.mp3",
+            "units": ["audios/egg_e.mp3", "audios/egg_gg.mp3"]
+          }
+        },
+        {
+          "id": "bee",
+          "display": "bee",
+          "units": ["b", "ee"],
+          "audio": {
+            "slow": "audios/bee_slow.mp3",
+            "natural": "audios/bee_natural.mp3",
+            "units": ["audios/bee_b.mp3", "audios/bee_ee.mp3"]
+          }
+        },
+        {
+          "id": "sea",
+          "display": "sea",
+          "units": ["s", "ea"],
+          "audio": {
+            "slow": "audios/sea_slow.mp3",
+            "natural": "audios/sea_natural.mp3",
+            "units": ["audios/sea_s.mp3", "audios/sea_ea.mp3"]
+          }
+        },
+        {
+          "id": "zoo",
+          "display": "zoo",
+          "units": ["z", "oo"],
+          "audio": {
+            "slow": "audios/zoo_slow.mp3",
+            "natural": "audios/zoo_natural.mp3",
+            "units": ["audios/zoo_z.mp3", "audios/zoo_oo.mp3"]
+          }
+        }
+      ]
+    },
+    {
+      "level": 3,
+      "ghost": true,
+      "words": [
+        {
+          "id": "cat",
+          "display": "cat",
+          "units": ["c", "a", "t"],
+          "audio": {
+            "slow": "audios/cat_slow.mp3",
+            "natural": "audios/cat_natural.mp3",
+            "units": ["audios/cat_c.mp3", "audios/cat_a.mp3", "audios/cat_t.mp3"]
+          }
+        },
+        {
+          "id": "ten",
+          "display": "ten",
+          "units": ["t", "e", "n"],
+          "audio": {
+            "slow": "audios/ten_slow.mp3",
+            "natural": "audios/ten_natural.mp3",
+            "units": ["audios/ten_t.mp3", "audios/ten_e.mp3", "audios/ten_n.mp3"]
+          }
+        },
+        {
+          "id": "pig",
+          "display": "pig",
+          "units": ["p", "i", "g"],
+          "audio": {
+            "slow": "audios/pig_slow.mp3",
+            "natural": "audios/pig_natural.mp3",
+            "units": ["audios/pig_p.mp3", "audios/pig_i.mp3", "audios/pig_g.mp3"]
+          }
+        },
+        {
+          "id": "sun",
+          "display": "sun",
+          "units": ["s", "u", "n"],
+          "audio": {
+            "slow": "audios/sun_slow.mp3",
+            "natural": "audios/sun_natural.mp3",
+            "units": ["audios/sun_s.mp3", "audios/sun_u.mp3", "audios/sun_n.mp3"]
+          }
+        },
+        {
+          "id": "hat",
+          "display": "hat",
+          "units": ["h", "a", "t"],
+          "audio": {
+            "slow": "audios/hat_slow.mp3",
+            "natural": "audios/hat_natural.mp3",
+            "units": ["audios/hat_h.mp3", "audios/hat_a.mp3", "audios/hat_t.mp3"]
+          }
+        },
+        {
+          "id": "top",
+          "display": "top",
+          "units": ["t", "o", "p"],
+          "audio": {
+            "slow": "audios/top_slow.mp3",
+            "natural": "audios/top_natural.mp3",
+            "units": ["audios/top_t.mp3", "audios/top_o.mp3", "audios/top_p.mp3"]
+          }
+        }
+      ]
+    },
+    {
+      "level": 4,
+      "ghost": false,
+      "words": [
+        {
+          "id": "cat",
+          "display": "cat",
+          "units": ["c", "a", "t"],
+          "audio": {
+            "slow": "audios/cat_slow.mp3",
+            "natural": "audios/cat_natural.mp3",
+            "units": ["audios/cat_c.mp3", "audios/cat_a.mp3", "audios/cat_t.mp3"]
+          }
+        },
+        {
+          "id": "ten",
+          "display": "ten",
+          "units": ["t", "e", "n"],
+          "audio": {
+            "slow": "audios/ten_slow.mp3",
+            "natural": "audios/ten_natural.mp3",
+            "units": ["audios/ten_t.mp3", "audios/ten_e.mp3", "audios/ten_n.mp3"]
+          }
+        },
+        {
+          "id": "pig",
+          "display": "pig",
+          "units": ["p", "i", "g"],
+          "audio": {
+            "slow": "audios/pig_slow.mp3",
+            "natural": "audios/pig_natural.mp3",
+            "units": ["audios/pig_p.mp3", "audios/pig_i.mp3", "audios/pig_g.mp3"]
+          }
+        },
+        {
+          "id": "sun",
+          "display": "sun",
+          "units": ["s", "u", "n"],
+          "audio": {
+            "slow": "audios/sun_slow.mp3",
+            "natural": "audios/sun_natural.mp3",
+            "units": ["audios/sun_s.mp3", "audios/sun_u.mp3", "audios/sun_n.mp3"]
+          }
+        },
+        {
+          "id": "hat",
+          "display": "hat",
+          "units": ["h", "a", "t"],
+          "audio": {
+            "slow": "audios/hat_slow.mp3",
+            "natural": "audios/hat_natural.mp3",
+            "units": ["audios/hat_h.mp3", "audios/hat_a.mp3", "audios/hat_t.mp3"]
+          }
+        },
+        {
+          "id": "top",
+          "display": "top",
+          "units": ["t", "o", "p"],
+          "audio": {
+            "slow": "audios/top_slow.mp3",
+            "natural": "audios/top_natural.mp3",
+            "units": ["audios/top_t.mp3", "audios/top_o.mp3", "audios/top_p.mp3"]
+          }
+        }
+      ]
+    },
+    {
+      "level": 5,
+      "ghost": true,
+      "words": [
+        {
+          "id": "frog",
+          "display": "frog",
+          "units": ["f", "r", "o", "g"],
+          "audio": {
+            "slow": "audios/frog_slow.mp3",
+            "natural": "audios/frog_natural.mp3",
+            "units": ["audios/frog_f.mp3", "audios/frog_r.mp3", "audios/frog_o.mp3", "audios/frog_g.mp3"]
+          }
+        },
+        {
+          "id": "slip",
+          "display": "slip",
+          "units": ["s", "l", "i", "p"],
+          "audio": {
+            "slow": "audios/slip_slow.mp3",
+            "natural": "audios/slip_natural.mp3",
+            "units": ["audios/slip_s.mp3", "audios/slip_l.mp3", "audios/slip_i.mp3", "audios/slip_p.mp3"]
+          }
+        },
+        {
+          "id": "swim",
+          "display": "swim",
+          "units": ["s", "w", "i", "m"],
+          "audio": {
+            "slow": "audios/swim_slow.mp3",
+            "natural": "audios/swim_natural.mp3",
+            "units": ["audios/swim_s.mp3", "audios/swim_w.mp3", "audios/swim_i.mp3", "audios/swim_m.mp3"]
+          }
+        },
+        {
+          "id": "flag",
+          "display": "flag",
+          "units": ["f", "l", "a", "g"],
+          "audio": {
+            "slow": "audios/flag_slow.mp3",
+            "natural": "audios/flag_natural.mp3",
+            "units": ["audios/flag_f.mp3", "audios/flag_l.mp3", "audios/flag_a.mp3", "audios/flag_g.mp3"]
+          }
+        },
+        {
+          "id": "step",
+          "display": "step",
+          "units": ["s", "t", "e", "p"],
+          "audio": {
+            "slow": "audios/step_slow.mp3",
+            "natural": "audios/step_natural.mp3",
+            "units": ["audios/step_s.mp3", "audios/step_t.mp3", "audios/step_e.mp3", "audios/step_p.mp3"]
+          }
+        },
+        {
+          "id": "clap",
+          "display": "clap",
+          "units": ["c", "l", "a", "p"],
+          "audio": {
+            "slow": "audios/clap_slow.mp3",
+            "natural": "audios/clap_natural.mp3",
+            "units": ["audios/clap_c.mp3", "audios/clap_l.mp3", "audios/clap_a.mp3", "audios/clap_p.mp3"]
+          }
+        }
+      ]
+    },
+    {
+      "level": 6,
+      "ghost": false,
+      "words": [
+        {
+          "id": "frog",
+          "display": "frog",
+          "units": ["f", "r", "o", "g"],
+          "audio": {
+            "slow": "audios/frog_slow.mp3",
+            "natural": "audios/frog_natural.mp3",
+            "units": ["audios/frog_f.mp3", "audios/frog_r.mp3", "audios/frog_o.mp3", "audios/frog_g.mp3"]
+          }
+        },
+        {
+          "id": "slip",
+          "display": "slip",
+          "units": ["s", "l", "i", "p"],
+          "audio": {
+            "slow": "audios/slip_slow.mp3",
+            "natural": "audios/slip_natural.mp3",
+            "units": ["audios/slip_s.mp3", "audios/slip_l.mp3", "audios/slip_i.mp3", "audios/slip_p.mp3"]
+          }
+        },
+        {
+          "id": "swim",
+          "display": "swim",
+          "units": ["s", "w", "i", "m"],
+          "audio": {
+            "slow": "audios/swim_slow.mp3",
+            "natural": "audios/swim_natural.mp3",
+            "units": ["audios/swim_s.mp3", "audios/swim_w.mp3", "audios/swim_i.mp3", "audios/swim_m.mp3"]
+          }
+        },
+        {
+          "id": "flag",
+          "display": "flag",
+          "units": ["f", "l", "a", "g"],
+          "audio": {
+            "slow": "audios/flag_slow.mp3",
+            "natural": "audios/flag_natural.mp3",
+            "units": ["audios/flag_f.mp3", "audios/flag_l.mp3", "audios/flag_a.mp3", "audios/flag_g.mp3"]
+          }
+        },
+        {
+          "id": "step",
+          "display": "step",
+          "units": ["s", "t", "e", "p"],
+          "audio": {
+            "slow": "audios/step_slow.mp3",
+            "natural": "audios/step_natural.mp3",
+            "units": ["audios/step_s.mp3", "audios/step_t.mp3", "audios/step_e.mp3", "audios/step_p.mp3"]
+          }
+        },
+        {
+          "id": "clap",
+          "display": "clap",
+          "units": ["c", "l", "a", "p"],
+          "audio": {
+            "slow": "audios/clap_slow.mp3",
+            "natural": "audios/clap_natural.mp3",
+            "units": ["audios/clap_c.mp3", "audios/clap_l.mp3", "audios/clap_a.mp3", "audios/clap_p.mp3"]
+          }
+        }
+      ]
+    },
+    {
+      "level": 7,
+      "ghost": true,
+      "words": [
+        {
+          "id": "cactus",
+          "display": "cactus",
+          "units": ["cac", "tus"],
+          "audio": {
+            "slow": "audios/cactus_slow.mp3",
+            "natural": "audios/cactus_natural.mp3",
+            "units": ["audios/cactus_cac.mp3", "audios/cactus_tus.mp3"]
+          }
+        },
+        {
+          "id": "baby",
+          "display": "baby",
+          "units": ["ba", "by"],
+          "audio": {
+            "slow": "audios/baby_slow.mp3",
+            "natural": "audios/baby_natural.mp3",
+            "units": ["audios/baby_ba.mp3", "audios/baby_by.mp3"]
+          }
+        },
+        {
+          "id": "pencil",
+          "display": "pencil",
+          "units": ["pen", "cil"],
+          "audio": {
+            "slow": "audios/pencil_slow.mp3",
+            "natural": "audios/pencil_natural.mp3",
+            "units": ["audios/pencil_pen.mp3", "audios/pencil_cil.mp3"]
+          }
+        },
+        {
+          "id": "monkey",
+          "display": "monkey",
+          "units": ["mon", "key"],
+          "audio": {
+            "slow": "audios/monkey_slow.mp3",
+            "natural": "audios/monkey_natural.mp3",
+            "units": ["audios/monkey_mon.mp3", "audios/monkey_key.mp3"]
+          }
+        },
+        {
+          "id": "tiger",
+          "display": "tiger",
+          "units": ["ti", "ger"],
+          "audio": {
+            "slow": "audios/tiger_slow.mp3",
+            "natural": "audios/tiger_natural.mp3",
+            "units": ["audios/tiger_ti.mp3", "audios/tiger_ger.mp3"]
+          }
+        },
+        {
+          "id": "zebra",
+          "display": "zebra",
+          "units": ["ze", "bra"],
+          "audio": {
+            "slow": "audios/zebra_slow.mp3",
+            "natural": "audios/zebra_natural.mp3",
+            "units": ["audios/zebra_ze.mp3", "audios/zebra_bra.mp3"]
+          }
+        }
+      ]
+    },
+    {
+      "level": 8,
+      "ghost": false,
+      "words": [
+        {
+          "id": "cactus",
+          "display": "cactus",
+          "units": ["cac", "tus"],
+          "audio": {
+            "slow": "audios/cactus_slow.mp3",
+            "natural": "audios/cactus_natural.mp3",
+            "units": ["audios/cactus_cac.mp3", "audios/cactus_tus.mp3"]
+          }
+        },
+        {
+          "id": "baby",
+          "display": "baby",
+          "units": ["ba", "by"],
+          "audio": {
+            "slow": "audios/baby_slow.mp3",
+            "natural": "audios/baby_natural.mp3",
+            "units": ["audios/baby_ba.mp3", "audios/baby_by.mp3"]
+          }
+        },
+        {
+          "id": "pencil",
+          "display": "pencil",
+          "units": ["pen", "cil"],
+          "audio": {
+            "slow": "audios/pencil_slow.mp3",
+            "natural": "audios/pencil_natural.mp3",
+            "units": ["audios/pencil_pen.mp3", "audios/pencil_cil.mp3"]
+          }
+        },
+        {
+          "id": "monkey",
+          "display": "monkey",
+          "units": ["mon", "key"],
+          "audio": {
+            "slow": "audios/monkey_slow.mp3",
+            "natural": "audios/monkey_natural.mp3",
+            "units": ["audios/monkey_mon.mp3", "audios/monkey_key.mp3"]
+          }
+        },
+        {
+          "id": "tiger",
+          "display": "tiger",
+          "units": ["ti", "ger"],
+          "audio": {
+            "slow": "audios/tiger_slow.mp3",
+            "natural": "audios/tiger_natural.mp3",
+            "units": ["audios/tiger_ti.mp3", "audios/tiger_ger.mp3"]
+          }
+        },
+        {
+          "id": "zebra",
+          "display": "zebra",
+          "units": ["ze", "bra"],
+          "audio": {
+            "slow": "audios/zebra_slow.mp3",
+            "natural": "audios/zebra_natural.mp3",
+            "units": ["audios/zebra_ze.mp3", "audios/zebra_bra.mp3"]
+          }
+        }
+      ]
+    },
+    {
+      "level": 9,
+      "ghost": true,
+      "words": [
+        {
+          "id": "cactus",
+          "display": "cactus",
+          "units": ["c", "a", "c", "t", "u", "s"],
+          "audio": {
+            "slow": "audios/cactus_slow.mp3",
+            "natural": "audios/cactus_natural.mp3",
+            "units": ["audios/cactus_c1.mp3", "audios/cactus_a.mp3", "audios/cactus_c2.mp3", "audios/cactus_t.mp3", "audios/cactus_u.mp3", "audios/cactus_s.mp3"]
+          }
+        },
+        {
+          "id": "baby",
+          "display": "baby",
+          "units": ["b", "a", "b", "y"],
+          "audio": {
+            "slow": "audios/baby_slow.mp3",
+            "natural": "audios/baby_natural.mp3",
+            "units": ["audios/baby_b1.mp3", "audios/baby_a.mp3", "audios/baby_b2.mp3", "audios/baby_y.mp3"]
+          }
+        },
+        {
+          "id": "pencil",
+          "display": "pencil",
+          "units": ["p", "e", "n", "c", "i", "l"],
+          "audio": {
+            "slow": "audios/pencil_slow.mp3",
+            "natural": "audios/pencil_natural.mp3",
+            "units": ["audios/pencil_p.mp3", "audios/pencil_e.mp3", "audios/pencil_n.mp3", "audios/pencil_c.mp3", "audios/pencil_i.mp3", "audios/pencil_l.mp3"]
+          }
+        },
+        {
+          "id": "monkey",
+          "display": "monkey",
+          "units": ["m", "o", "n", "k", "ey"],
+          "audio": {
+            "slow": "audios/monkey_slow.mp3",
+            "natural": "audios/monkey_natural.mp3",
+            "units": ["audios/monkey_m.mp3", "audios/monkey_o.mp3", "audios/monkey_n.mp3", "audios/monkey_k.mp3", "audios/monkey_ey.mp3"]
+          }
+        },
+        {
+          "id": "tiger",
+          "display": "tiger",
+          "units": ["t", "i", "g", "er"],
+          "audio": {
+            "slow": "audios/tiger_slow.mp3",
+            "natural": "audios/tiger_natural.mp3",
+            "units": ["audios/tiger_t.mp3", "audios/tiger_i.mp3", "audios/tiger_g.mp3", "audios/tiger_er.mp3"]
+          }
+        },
+        {
+          "id": "zebra",
+          "display": "zebra",
+          "units": ["z", "e", "b", "r", "a"],
+          "audio": {
+            "slow": "audios/zebra_slow.mp3",
+            "natural": "audios/zebra_natural.mp3",
+            "units": ["audios/zebra_z.mp3", "audios/zebra_e.mp3", "audios/zebra_b.mp3", "audios/zebra_r.mp3", "audios/zebra_a.mp3"]
+          }
+        }
+      ]
+    },
+    {
+      "level": 10,
+      "ghost": false,
+      "words": [
+        {
+          "id": "cactus",
+          "display": "cactus",
+          "units": ["c", "a", "c", "t", "u", "s"],
+          "audio": {
+            "slow": "audios/cactus_slow.mp3",
+            "natural": "audios/cactus_natural.mp3",
+            "units": ["audios/cactus_c1.mp3", "audios/cactus_a.mp3", "audios/cactus_c2.mp3", "audios/cactus_t.mp3", "audios/cactus_u.mp3", "audios/cactus_s.mp3"]
+          }
+        },
+        {
+          "id": "baby",
+          "display": "baby",
+          "units": ["b", "a", "b", "y"],
+          "audio": {
+            "slow": "audios/baby_slow.mp3",
+            "natural": "audios/baby_natural.mp3",
+            "units": ["audios/baby_b1.mp3", "audios/baby_a.mp3", "audios/baby_b2.mp3", "audios/baby_y.mp3"]
+          }
+        },
+        {
+          "id": "pencil",
+          "display": "pencil",
+          "units": ["p", "e", "n", "c", "i", "l"],
+          "audio": {
+            "slow": "audios/pencil_slow.mp3",
+            "natural": "audios/pencil_natural.mp3",
+            "units": ["audios/pencil_p.mp3", "audios/pencil_e.mp3", "audios/pencil_n.mp3", "audios/pencil_c.mp3", "audios/pencil_i.mp3", "audios/pencil_l.mp3"]
+          }
+        },
+        {
+          "id": "monkey",
+          "display": "monkey",
+          "units": ["m", "o", "n", "k", "ey"],
+          "audio": {
+            "slow": "audios/monkey_slow.mp3",
+            "natural": "audios/monkey_natural.mp3",
+            "units": ["audios/monkey_m.mp3", "audios/monkey_o.mp3", "audios/monkey_n.mp3", "audios/monkey_k.mp3", "audios/monkey_ey.mp3"]
+          }
+        },
+        {
+          "id": "tiger",
+          "display": "tiger",
+          "units": ["t", "i", "g", "er"],
+          "audio": {
+            "slow": "audios/tiger_slow.mp3",
+            "natural": "audios/tiger_natural.mp3",
+            "units": ["audios/tiger_t.mp3", "audios/tiger_i.mp3", "audios/tiger_g.mp3", "audios/tiger_er.mp3"]
+          }
+        },
+        {
+          "id": "zebra",
+          "display": "zebra",
+          "units": ["z", "e", "b", "r", "a"],
+          "audio": {
+            "slow": "audios/zebra_slow.mp3",
+            "natural": "audios/zebra_natural.mp3",
+            "units": ["audios/zebra_z.mp3", "audios/zebra_e.mp3", "audios/zebra_b.mp3", "audios/zebra_r.mp3", "audios/zebra_a.mp3"]
+          }
+        }
+      ]
+    }
+  ]
+}

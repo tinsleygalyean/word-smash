@@ -1,0 +1,250 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #d7b47e;
+  font-family: 'Fredoka', 'Nunito', system-ui, sans-serif;
+  font-weight: 600;
+}
+
+/* ===== LOADING ===== */
+.ws-loading {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(120% 100% at 50% 0%, #eed0a0 0%, #d7b47e 60%, #c69c60 100%);
+}
+.ws-loading-dots { display: flex; gap: 12px; }
+.ws-loading-dots span {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #c9553e;
+  animation: ws-bounce 0.7s infinite alternate;
+}
+.ws-loading-dots span:nth-child(2) { background: #3d8f83; animation-delay: 0.15s; }
+.ws-loading-dots span:nth-child(3) { background: #e0a13c; animation-delay: 0.30s; }
+@keyframes ws-bounce {
+  from { transform: translateY(0); opacity: 0.5; }
+  to   { transform: translateY(-14px); opacity: 1; }
+}
+
+/* ===== ROOT + SCALED STAGE ===== */
+.ws-root {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #d7b47e;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.ws-stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1200px;
+  height: 540px;
+  transform: translate(-50%, -50%) scale(var(--ws-scale, 1));
+  transform-origin: center center;
+}
+
+/* screen shake wrapper */
+.ws-shakeable { position: absolute; inset: 0; }
+@keyframes ws-shake {
+  0% { transform: translate(0,0); }
+  10% { transform: translate(-11px, 6px); }
+  22% { transform: translate(10px, -8px); }
+  34% { transform: translate(-9px, 5px); }
+  46% { transform: translate(8px, -6px); }
+  58% { transform: translate(-6px, 4px); }
+  70% { transform: translate(5px, -3px); }
+  82% { transform: translate(-3px, 2px); }
+  100% { transform: translate(0,0); }
+}
+.ws-shake { animation: ws-shake 0.35s cubic-bezier(.36,.07,.19,.97) both; }
+
+/* ===== BACKGROUND ZONES ===== */
+.ws-wall {
+  position: absolute; left: 0; right: 0; top: 0;
+  overflow: hidden;
+}
+.ws-bench {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  overflow: hidden;
+}
+
+
+/* ===== PLAQUE / PIECE FACE ===== */
+.ws-face {
+  position: absolute;
+  will-change: transform;
+}
+.ws-tappable { cursor: pointer; }
+
+/* whole-word plaque idle breathe */
+@keyframes ws-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.018); }
+}
+.ws-breathe { animation: ws-breathe 3.4s ease-in-out infinite; }
+
+/* piece hint glow */
+@keyframes ws-piece-hint {
+  0%, 100% { filter: drop-shadow(0 6px 10px rgba(90,55,20,.35)); }
+  50% { filter: drop-shadow(0 0 16px rgba(255,210,120,.95)) drop-shadow(0 6px 10px rgba(90,55,20,.35)); }
+}
+.ws-piece-hint { animation: ws-piece-hint 0.9s ease-in-out infinite; }
+
+/* slot hint pulse ring */
+@keyframes ws-slot-hint {
+  0%, 100% { box-shadow: inset 0 0 0 3px rgba(224,161,60,0); }
+  50% { box-shadow: inset 0 0 0 3px rgba(224,161,60,.9), 0 0 16px rgba(224,161,60,.5); }
+}
+.ws-slot-hint { animation: ws-slot-hint 0.9s ease-in-out infinite; }
+
+/* piece seat pop */
+@keyframes ws-seat {
+  0% { transform: scale(1.06); }
+  60% { transform: scale(0.97); }
+  100% { transform: scale(1); }
+}
+.ws-seat { animation: ws-seat 0.22s ease-out both; }
+
+/* touched-piece bump */
+@keyframes ws-bump {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+.ws-bump { animation: ws-bump 0.18s ease-out both; }
+
+/* word-complete hop */
+@keyframes ws-hop {
+  0% { transform: translateY(0) scaleX(1) scaleY(1); }
+  18% { transform: translateY(-14px) scaleX(0.98) scaleY(1.04); }
+  36% { transform: translateY(0) scaleX(1.04) scaleY(0.96); }
+  54% { transform: translateY(-9px) scaleX(0.99) scaleY(1.03); }
+  72% { transform: translateY(0) scaleX(1.03) scaleY(0.97); }
+  100% { transform: translateY(0) scaleX(1) scaleY(1); }
+}
+.ws-hop { animation: ws-hop 0.7s ease-in-out both; }
+
+/* sparkles */
+@keyframes ws-sparkle {
+  0% { transform: translate(0,0) scale(0.2); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translate(var(--sx), var(--sy)) scale(1); opacity: 0; }
+}
+.ws-sparkle { position: absolute; animation: ws-sparkle 0.9s ease-out both; pointer-events: none; }
+
+/* wood chips */
+@keyframes ws-chip {
+  0% { transform: translate(0,0) rotate(0deg); opacity: 1; }
+  100% { transform: translate(var(--cx), var(--cy)) rotate(var(--cr)); opacity: 0; }
+}
+.ws-chip { position: absolute; animation: ws-chip var(--cd,0.7s) cubic-bezier(.2,.6,.5,1) both; pointer-events: none; }
+
+/* impact starburst ring */
+@keyframes ws-burst {
+  0% { transform: translate(-50%,-50%) scale(0.2); opacity: 0.9; }
+  100% { transform: translate(-50%,-50%) scale(2.6); opacity: 0; }
+}
+.ws-burst { position: absolute; border-radius: 50%; animation: ws-burst 0.4s ease-out both; pointer-events: none; }
+
+/* full-screen impact flash */
+@keyframes ws-flash {
+  0% { opacity: 0.55; }
+  100% { opacity: 0; }
+}
+.ws-flash { position: absolute; inset: 0; pointer-events: none; animation: ws-flash 0.22s ease-out both; }
+
+/* confetti */
+@keyframes ws-confetti {
+  0% { transform: translate(0,0) rotate(0deg); opacity: 1; }
+  100% { transform: translate(var(--vx), var(--vy)) rotate(var(--rot)); opacity: 0; }
+}
+.ws-confetti { position: absolute; border-radius: 2px; animation: ws-confetti var(--dur,1.5s) ease-out both; pointer-events: none; }
+
+/* hammer idle rock */
+@keyframes ws-hammer-rock {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(5deg); }
+}
+.ws-hammer-rock { animation: ws-hammer-rock 2.4s ease-in-out infinite; transform-origin: 50% 90%; }
+
+/* tutorial hand bob */
+@keyframes ws-hand-bob {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(0.92); }
+}
+.ws-hand-grip { animation: ws-hand-bob 0.8s ease-in-out infinite; }
+
+/* generic fades */
+@keyframes ws-fade-in { from { opacity: 0; } to { opacity: 1; } }
+.ws-fade-in { animation: ws-fade-in 0.4s ease both; }
+@keyframes ws-fade-out { from { opacity: 1; } to { opacity: 0; } }
+
+/* amber sound rings (auto-play / listen affordance) §3 */
+@keyframes ws-ring {
+  0% { transform: translate(-50%,-50%) scale(0.3); opacity: 0.7; }
+  100% { transform: translate(-50%,-50%) scale(1.9); opacity: 0; }
+}
+.ws-ring { position: absolute; border-radius: 50%; animation: ws-ring 1s ease-out both; pointer-events: none; }
+
+/* no-ghost slot play button pulse §4 */
+@keyframes ws-playbtn-pulse {
+  0%, 100% { transform: translate(-50%,-50%) scale(1); }
+  50% { transform: translate(-50%,-50%) scale(1.16); }
+}
+.ws-playbtn-pulse { animation: ws-playbtn-pulse 0.6s ease-in-out infinite; }
+
+/* recess pulse while its play button speaks §4 */
+@keyframes ws-recess-pulse {
+  0%, 100% { box-shadow: inset 0 4px 8px rgba(90,55,20,.35), inset 0 -2px 2px rgba(255,255,255,.18); }
+  50% { box-shadow: inset 0 4px 8px rgba(90,55,20,.35), 0 0 16px rgba(224,161,60,.6), inset 0 0 0 3px rgba(224,161,60,.7); }
+}
+.ws-recess-pulse { animation: ws-recess-pulse 0.6s ease-in-out infinite; }
+
+/* wind-up world vignette dim §2/§3 */
+@keyframes ws-vignette-in { from { opacity: 0; } to { opacity: 1; } }
+.ws-vignette {
+  position: absolute; inset: 0; pointer-events: none; z-index: 800;
+  background: radial-gradient(120% 90% at 50% 42%, transparent 30%, rgba(30,18,6,.5) 100%);
+  animation: ws-vignette-in 0.5s ease both;
+}
+
+/* hammer transform spin §8 */
+@keyframes ws-hammer-spin {
+  0% { transform: rotate(0deg) scale(1); }
+  100% { transform: rotate(720deg) scale(1.15); }
+}
+.ws-hammer-spin { animation: ws-hammer-spin 0.9s cubic-bezier(.55,0,.9,.6) both; transform-origin: 50% 50%; }
+
+/* white flash §8 */
+@keyframes ws-white-flash { 0% { opacity: 0.9; } 100% { opacity: 0; } }
+.ws-white-flash { position: absolute; inset: 0; background: #fff; pointer-events: none; animation: ws-white-flash 0.12s ease-out both; }
+
+/* radiant upgrade burst §8 — warm glow that blooms out at the transform */
+@keyframes ws-radiant {
+  0% { transform: translate(-50%,-50%) scale(0.2); opacity: 0; }
+  25% { opacity: 0.95; }
+  100% { transform: translate(-50%,-50%) scale(2.4); opacity: 0; }
+}
+.ws-radiant {
+  position: absolute; width: 220px; height: 220px; border-radius: 50%; pointer-events: none; z-index: 855;
+  background: radial-gradient(closest-side, #fff3d6 0%, #ffd98f 45%, rgba(224,161,60,0) 72%);
+  animation: ws-radiant 0.6s ease-out both;
+}
+
+/* tutorial hand dust dissolve §9 */
+@keyframes ws-dust { 0% { opacity: 0.9; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-30px) scale(0.4); } }
+.ws-dust { animation: ws-dust 0.3s ease-out both; }

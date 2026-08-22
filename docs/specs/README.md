@@ -1,12 +1,12 @@
 # Word Smash — Spec-Driven AI Development (SDAD) specs
 
-This directory holds the four living product specifications plus the operating
-documents that keep Word Smash coherent across people, teams, and AI developer
-tools. They are written so a new team could replicate and test the product from
-scratch **without reading the existing code**. Future task plans reference these
-documents, and the documents are updated after each completed/approved task.
+This directory holds the four living specifications that are the **single source
+of truth** for Word Smash. They are written so a new team could replicate and
+test the product from scratch **without reading the existing code**. Future task
+plans reference these documents, and the documents are updated after each
+completed/approved task.
 
-## The core product specifications
+## The four documents
 
 | File | Answers | Stability |
 |---|---|---|
@@ -14,13 +14,6 @@ documents, and the documents are updated after each completed/approved task.
 | [`DEVSPEC.md`](./DEVSPEC.md) | **What gets built and how it behaves** — data schemas, per-module goals/tasks/exit criteria, non-functional requirements, implementation guide, appendices. **Source of truth for behavior.** | Active |
 | [`UISPEC.md`](./UISPEC.md) | The **user-facing surface** — visual system, every phase/screen/state, hint modes, hammer stages, tutorial, and Gherkin acceptance criteria. | Active |
 | [`TESTSPEC.md`](./TESTSPEC.md) | **How to verify** the DEVSPEC and UISPEC — test cases, fixtures, build-and-test sequence, validation gate, and a requirement→test coverage matrix. | Active |
-
-## Operating documents
-
-| File | Answers | Stability |
-|---|---|---|
-| [`BACKLOG.md`](./BACKLOG.md) | **What work is next and how teams work together** — priorities, ownership, acceptance evidence, and AI-developer handoff workflow. | Active |
-| [`DECISIONS-2026-08-22.md`](./DECISIONS-2026-08-22.md) | **Why cross-team choices were made** — public-repo, Git history, AI-tooling, and documentation-governance decisions. | Historical record |
 
 ## The reference chain
 
@@ -89,6 +82,3 @@ you add a changelog entry.
   (architecture decisions), `../../artifacts/word-smash/UPLOAD.md` (CMS upload),
   and the approved design contract at
   `../../attached_assets/word_smash_design/handoff/DESIGN-SPEC.md`.
-- Use `BACKLOG.md` for active work and workflow; add a dated decision record for
-  consequential choices that affect teams, tooling, scope, publication, or
-  release policy.

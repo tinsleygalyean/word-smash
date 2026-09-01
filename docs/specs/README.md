@@ -80,5 +80,10 @@ you add a changelog entry.
   authoritative for constants; the UISPEC and TESTSPEC must match it.
 - Deeper background lives in `../../artifacts/word-smash/DECISIONS.md`
   (architecture decisions), `../../artifacts/word-smash/UPLOAD.md` (CMS upload),
-  and the approved design contract at
+  `../CONTENT_PIPELINE.md` (sheet → JSON → ZIPs → CMS), and the approved design
+  contract at
   `../../attached_assets/word_smash_design/handoff/DESIGN-SPEC.md`.
+- **Level and word content is not specified here.** It lives in the
+  [Word Smash levels sheet](https://docs.google.com/spreadsheets/d/1X_A1EnF4ySLp508donSBBKuL-mDYG4Ojlv7ItcWCXfo/edit),
+  which is authoritative over any word list quoted in these documents, and is
+  compiled into `wordsmash.json` by `pnpm content:build`.

@@ -19,15 +19,26 @@ artifacts, workflows, approvals, secrets, verification, and a portable
 Claude-oriented blueprint—read the
 [Repository AI Onboarding Playbook](docs/REPLIT_AGENT_PLAYBOOK.md).
 
+New here? In Claude Code run **`/getstarted`** to set up a fresh clone, then
+**`/console`** to build and play. The manual path is in
+[docs/SETUP.md](docs/SETUP.md).
+
+Level content lives in a Google Sheet, not in the repository. To change words or
+levels, edit the sheet and rebuild—see the
+[Content pipeline](docs/CONTENT_PIPELINE.md).
+
 ## Getting started
 
-Requirements: Node.js 24 and pnpm. Run commands from the repository root.
+Requirements: Node.js 24 (the version matters) and pnpm. Run commands from the
+repository root. **Full step-by-step setup, including the extra step needed on
+any machine that is not linux-x64: [docs/SETUP.md](docs/SETUP.md).**
 
 ```bash
 git clone <repository-url>
 cd <repository-directory>
 corepack enable
 pnpm install
+pnpm setup:native   # required off linux-x64 (macOS, Windows, ARM Linux)
 
 # Learn the workspace before changing it
 cat README.md
@@ -58,6 +69,27 @@ PORT=8080 pnpm --filter @workspace/api-server run dev
 PORT=8081 BASE_PATH=/__mockup \
   pnpm --filter @workspace/mockup-sandbox run dev
 ```
+
+## Content and release commands
+
+Level content comes from the
+[Word Smash levels sheet](https://docs.google.com/spreadsheets/d/1X_A1EnF4ySLp508donSBBKuL-mDYG4Ojlv7ItcWCXfo/edit)
+(one tab per language). `public/lang/<code>/wordsmash.json` is generated from it.
+
+```bash
+pnpm content:build     # sheet → language JSON, validated
+pnpm game:build        # content + engine ZIP + language ZIPs
+pnpm game:preview      # play/test a built language (http://localhost:23520)
+pnpm game:upload       # send to the CMS — dry run unless --live
+```
+
+Add `-- --lang <code>` to any of them to work on one language, and
+`pnpm game:artifact` to pack a language into a single shareable HTML file.
+`pnpm game:console` (or `/console` in Claude Code) opens a local control panel
+that runs all four against a chosen language and previews the result at
+phone-landscape proportions.
+The full process, validation rules, and how to add a word or a language are in
+the [Content pipeline](docs/CONTENT_PIPELINE.md).
 
 Useful Word Smash release checks:
 
@@ -114,6 +146,7 @@ Read and update the chain from intent to verification:
 | [TESTSPEC](docs/specs/TESTSPEC.md) | How is the required behavior and UI verified? | Test cases, fixtures, gates, and coverage map |
 | [Architecture decisions](artifacts/word-smash/DECISIONS.md) | Why were important implementation constraints chosen? | Deeper rationale and Curious Reader compatibility decisions |
 | [Upload guide](artifacts/word-smash/UPLOAD.md) | How are packages prepared and sent to the CMS? | Operator sequence, prerequisites, dry run, and human-controlled boundaries |
+| [Content pipeline](docs/CONTENT_PIPELINE.md) | How does sheet content become a release? | Source sheet, generated files, build/preview/upload commands |
 
 When intent changes, review downstream documents in the table order. When an
 implementation detail changes without altering intent, begin at the earliest
@@ -144,6 +177,8 @@ safely. Both parties should pause when scope, evidence, or approval changes.
 - `lib/` — shared workspace libraries.
 - `scripts/` — repository automation, including the CMS upload client.
 - `docs/specs/` — living Word Smash specification chain.
+- `docs/CONTENT_PIPELINE.md` — sheet → JSON → ZIPs → CMS, and the commands for it.
+- `docs/SETUP.md` — first-time setup on a developer machine.
 - `.local/skills/` — Replit Agent's on-demand operating instructions. These are
   useful source material but do not become available automatically to other AIs.
 - `.replit-artifact/artifact.toml` inside each artifact — checked-in artifact

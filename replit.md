@@ -4,6 +4,12 @@ An offline literacy web game for children ages 4–8 built for Curious Learning'
 
 ## Run & Operate
 
+- `pnpm content:build` — regenerate language JSON from the Google Sheet (source of truth for levels/words)
+- `pnpm game:build` — content + offline bundle + engine/language ZIPs
+- `pnpm game:preview` — serve a built language from `dist/standalone` (port 23520)
+- `pnpm game:upload` — upload all languages to the CMS (dry run unless `--live`)
+- `pnpm game:console` — local control panel for all four commands + phone-landscape preview (port 23522)
+- See `docs/CONTENT_PIPELINE.md` for the whole path
 - `pnpm --filter @workspace/word-smash run dev` — run the game (port 23518, preview at `/`)
 - `pnpm --filter @workspace/word-smash run package:container` — build the Curious Reader upload ZIPs (`--lang <code>`, default `english`) into `artifacts/word-smash/dist/container/`
 - `pnpm --filter @workspace/scripts run upload:wordsmash` — regenerate the ZIPs and upload them through the Curious Reader CMS MCP endpoint (`--lang <code>`; dry-runs unless `CR_CMS_SERVER_URL` + `CR_MCP_API_KEY` are set). See `artifacts/word-smash/UPLOAD.md`.
@@ -23,7 +29,8 @@ An offline literacy web game for children ages 4–8 built for Curious Learning'
 - `artifacts/word-smash/` — the game itself (react-vite artifact)
   - `src/game/` — core engine: types, audio, storage, events, physics
   - `src/components/` — React game components
-  - `public/lang/english/wordsmash.json` — authoritative 10-level English language pack
+  - `public/lang/english/wordsmash.json` — GENERATED from the levels Google Sheet by `scripts/build-content.mjs`; edit the sheet, not this file
+  - `content.config.json` — sheet ID and the tab for each language
   - `upload/wordsmash-icon-512.png` — true-PNG 512×512 tile icon (uploaded as `iconBase64`; never packed in a ZIP)
   - `DECISIONS.md` — architecture decisions and offline constraints
   - `UPLOAD.md` — Curious Reader CMS MCP upload guide (sequence, exact args, prerequisites)

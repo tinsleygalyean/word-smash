@@ -5,7 +5,16 @@
   "scripts": {
     "preinstall": "sh -c 'rm -f package-lock.json yarn.lock; case \"$npm_config_user_agent\" in pnpm/*) ;; *) echo \"Use pnpm instead\" >&2; exit 1 ;; esac'",
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
+    "setup:native": "node scripts/setup-native.mjs",
+    "preflight": "node scripts/preflight.mjs",
+    "env:init": "node scripts/env-init.mjs",
     "typecheck:libs": "tsc --build",
+    "content:build": "pnpm --filter @workspace/word-smash run content:build",
+    "game:build": "pnpm --filter @workspace/word-smash run build:release",
+    "game:preview": "pnpm --filter @workspace/word-smash run preview:release",
+    "game:artifact": "pnpm --filter @workspace/word-smash run package:artifact",
+    "game:upload": "pnpm --filter @workspace/scripts run upload:all",
+    "game:console": "pnpm --filter @workspace/word-smash run console",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
   },
   "private": true,

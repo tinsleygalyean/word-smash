@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Word Smash console</title>
+<style>
+  /* The workshop at night: the game's own honey/paint palette on a dark,
+     warm-biased ground so a long log stays readable. Single, committed theme —
+     this is a local tool, not a page that renders in someone else's setting. */
+  :root {
+    --wood-900:#1c1611; --wood-800:#241d16; --wood-700:#2f251c; --wood-600:#3d3025;
+    --line:#4a3a2c;
+    --honey:#d7b47e; --honey-lo:#c69c60; --cream:#eed0a0; --paper:#fff3d6;
+    --amber:#e0a13c; --terracotta:#c9553e; --teal:#3d8f83;
+    --ink:#f2e4cb; --ink-dim:#b6a184; --ink-faint:#8a7862;
+    --radius:10px;
+    --font-display:'Fredoka','Nunito',system-ui,sans-serif;
+    --font-ui:system-ui,-apple-system,'Segoe UI',sans-serif;
+    --font-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  @font-face{
+    font-family:'Fredoka'; font-weight:600; font-display:swap;
+    src:url('/assets/fredoka-600.woff2') format('woff2');
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--wood-900); color:var(--ink);
+    font-family:var(--font-ui); font-size:14px; line-height:1.5;
+    min-height:100vh;
+  }
+  button,select{font:inherit;color:inherit}
+
+  /* ── header ───────────────────────────────────────────────────────────── */
+  header{
+    display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+    padding:14px 20px; background:var(--wood-800);
+    border-bottom:1px solid var(--line);
+    position:sticky; top:0; z-index:10;
+  }
+  .brand{display:flex;align-items:center;gap:10px;margin-right:auto}
+  .brand h1{
+    font-family:var(--font-display); font-size:18px; font-weight:600;
+    letter-spacing:.01em; color:var(--paper);
+  }
+  .mallet{width:26px;height:26px;flex:none}
+  .lang-field{display:flex;align-items:center;gap:8px}
+  .lang-field label{
+    font-size:11px; text-transform:uppercase; letter-spacing:.08em;
+    color:var(--ink-faint);
+  }
+  select{
+    background:var(--wood-700); border:1px solid var(--line);
+    border-radius:8px; padding:7px 30px 7px 11px; cursor:pointer;
+    appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23b6a184' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 10px center; background-size:10px;
+  }
+  select:hover{border-color:var(--honey-lo)}
+  select:focus-visible,button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+  /* ── layout ───────────────────────────────────────────────────────────── */
+  main{display:grid;grid-template-columns:minmax(320px,380px) 1fr;gap:20px;padding:20px;align-items:start}
+  @media (max-width:900px){main{grid-template-columns:1fr}}
+  .panel{background:var(--wood-800);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  .panel-head{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:10px 14px;border-bottom:1px solid var(--line);background:var(--wood-700);
+  }
+  .panel-head h2{
+    font-size:11px;text-transform:uppercase;letter-spacing:.09em;
+    color:var(--ink-dim);font-weight:600;
+  }
+
+  /* ── command cards ────────────────────────────────────────────────────── */
+  .cmds{display:flex;flex-direction:column;gap:1px;background:var(--line)}
+  .cmd{
+    display:grid;grid-template-columns:30px 1fr;gap:3px 12px;align-items:center;
+    padding:13px 14px;background:var(--wood-800);
+    border:none;text-align:left;cursor:pointer;width:100%;
+    transition:background .12s ease;
+  }
+  .cmd:hover:not(:disabled){background:var(--wood-700)}
+  .cmd:disabled{cursor:not-allowed;opacity:.45}
+  .cmd-name{grid-column:2;grid-row:1;font-family:var(--font-mono);font-size:13px;color:var(--paper)}
+  .cmd-desc{grid-column:2;grid-row:2;font-size:12px;color:var(--ink-faint);line-height:1.4}
+  .cmd-go{
+    grid-column:1;grid-row:1/3;width:30px;height:30px;border-radius:50%;
+    display:grid;place-items:center;font-size:12px;
+    background:var(--wood-600);color:var(--honey);
+  }
+  .cmd:hover:not(:disabled) .cmd-go{background:var(--amber);color:var(--wood-900)}
+  .cmd[data-state="running"] .cmd-go{background:var(--amber);color:var(--wood-900);animation:pulse 1s ease-in-out infinite}
+  .cmd[data-state="ok"] .cmd-go{background:var(--teal);color:var(--paper)}
+  .cmd[data-state="fail"] .cmd-go{background:var(--terracotta);color:var(--paper)}
+  @keyframes pulse{50%{opacity:.5}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+  /* ── status strip ─────────────────────────────────────────────────────── */
+  .status{padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+  .stat{display:flex;justify-content:space-between;gap:12px;font-size:12px}
+  .stat dt{color:var(--ink-faint)}
+  .stat dd{font-family:var(--font-mono);color:var(--ink);font-variant-numeric:tabular-nums;text-align:right}
+  .pill{
+    display:inline-block;padding:1px 8px;border-radius:999px;
+    font-size:11px;font-family:var(--font-ui);
+  }
+  .pill.on{background:rgba(61,143,131,.22);color:#7fd0c2}
+  .pill.off{background:rgba(201,85,62,.18);color:#e89680}
+
+  /* ── log ──────────────────────────────────────────────────────────────── */
+  #log{
+    font-family:var(--font-mono);font-size:12px;line-height:1.55;
+    padding:12px 14px;height:340px;overflow:auto;white-space:pre-wrap;
+    word-break:break-word;background:var(--wood-900);
+  }
+  #log .ok{color:#7fd0c2}
+  #log .bad{color:#e89680}
+  #log .step{color:var(--amber)}
+  #log .warn{color:var(--honey)}
+  #log .muted{color:var(--ink-faint)}
+  #log .cmdline{color:var(--cream);border-top:1px solid var(--line);margin-top:8px;padding-top:8px}
+  #log:empty::after{content:'Idle — pick a language and run a command.';color:var(--ink-faint);font-family:var(--font-ui)}
+
+  /* ── preview ──────────────────────────────────────────────────────────── */
+  .preview-wrap{padding:16px;display:flex;flex-direction:column;align-items:center;gap:12px;background:var(--wood-900)}
+  .device{
+    width:100%;max-width:760px;aspect-ratio:var(--ar,2.167);
+    background:#000;border-radius:18px;padding:9px;
+    border:1px solid var(--line);
+    box-shadow:0 10px 34px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,243,214,.06);
+    position:relative;
+  }
+  .device iframe{width:100%;height:100%;border:0;border-radius:10px;display:block;background:var(--honey)}
+  .device.empty{display:grid;place-items:center;background:var(--wood-800)}
+  .device.empty p{color:var(--ink-faint);font-size:13px;text-align:center;padding:0 24px}
+  .ar-row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;align-items:center}
+  .ar-btn{
+    background:var(--wood-700);border:1px solid var(--line);border-radius:999px;
+    padding:5px 12px;font-size:12px;cursor:pointer;color:var(--ink-dim);
+  }
+  .ar-btn[aria-pressed="true"]{background:var(--honey);border-color:var(--honey);color:var(--wood-900)}
+  .ar-note{font-size:11px;color:var(--ink-faint);font-variant-numeric:tabular-nums}
+
+  .ghost-btn{
+    background:var(--wood-700);border:1px solid var(--line);border-radius:8px;
+    padding:5px 11px;font-size:12px;cursor:pointer;color:var(--ink-dim);
+  }
+  .ghost-btn:hover{border-color:var(--honey-lo);color:var(--ink)}
+
+  /* ── live-upload notice ───────────────────────────────────────────────── */
+  .notice{
+    margin:0 14px 14px;padding:11px 13px;border-radius:8px;
+    background:rgba(201,85,62,.10);border:1px solid rgba(201,85,62,.34);
+    font-size:12px;color:var(--ink-dim);line-height:1.5;
+  }
+  .notice strong{color:#e89680;font-weight:600}
+  .notice code{
+    font-family:var(--font-mono);background:var(--wood-900);
+    padding:1px 6px;border-radius:4px;color:var(--cream);
+  }
+  .notice .row{display:flex;align-items:center;gap:8px;margin-top:8px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <svg class="mallet" viewBox="0 0 32 32" aria-hidden="true">
+      <rect x="5" y="6" width="17" height="10" rx="3" fill="#c9553e"/>
+      <rect x="5" y="6" width="17" height="4" rx="2" fill="#e0a13c"/>
+      <rect x="12" y="15" width="4.6" height="13" rx="2.3" fill="#c69c60"
+            transform="rotate(-16 14.3 21.5)"/>
+    </svg>
+    <h1>Word Smash console</h1>
+  </div>
+  <div class="lang-field">
+    <label for="lang">Language</label>
+    <select id="lang"></select>
+  </div>
+</header>
+
+<main>
+  <div style="display:flex;flex-direction:column;gap:20px">
+    <section class="panel">
+      <div class="panel-head"><h2>Commands</h2><span id="runhint" class="ar-note"></span></div>
+      <div class="cmds" id="cmds"></div>
+      <div class="notice">
+        <strong>Live upload is terminal-only.</strong> The console always runs the
+        upload as a dry run. A real upload needs a typed confirmation, so it is
+        deliberately not one click in a browser:
+        <div class="row">
+          <code id="livecmd">pnpm game:upload -- --live</code>
+          <button class="ghost-btn" id="copylive">Copy</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Status</h2>
+        <button class="ghost-btn" id="refresh">Refresh</button>
+      </div>
+      <dl class="status" id="status"></dl>
+    </section>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:20px">
+    <section class="panel">
+      <div class="panel-head"><h2>Output</h2>
+        <button class="ghost-btn" id="clearlog">Clear</button>
+      </div>
+      <div id="log" role="log" aria-live="polite"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Preview</h2>
+        <button class="ghost-btn" id="reload" hidden>Restart at level 1</button>
+      </div>
+      <div class="preview-wrap">
+        <div class="device empty" id="device" style="--ar:2.167">
+          <p>Run <strong>Preview</strong> to play the built bundle here,
+             framed at phone-landscape proportions.</p>
+        </div>
+        <div class="ar-row" id="arrow">
+          <button class="ar-btn" data-ar="2.167" aria-pressed="true">iPhone 19.5:9</button>
+          <button class="ar-btn" data-ar="2.222" aria-pressed="false">Android 20:9</button>
+          <button class="ar-btn" data-ar="1.778" aria-pressed="false">16:9</button>
+          <button class="ar-btn" data-ar="1.5" aria-pressed="false">Tablet 3:2</button>
+          <span class="ar-note" id="arnote"></span>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+const COMMANDS = [
+  { id:'content', name:'pnpm content:build', desc:'Pull the Google Sheet → language JSON, validated.' },
+  { id:'build',   name:'pnpm game:build',    desc:'Content + offline bundle + engine and language ZIPs.' },
+  { id:'preview', name:'pnpm game:preview',  desc:'Run offline checks, then play the built bundle below.' },
+  { id:'upload',  name:'pnpm game:upload',   desc:'CMS upload plan — always a dry run from the console.' },
+];
+
+const $ = (s) => document.querySelector(s);
+const logEl = $('#log'), langEl = $('#lang'), deviceEl = $('#device');
+let running = false;
+
+// ── commands ────────────────────────────────────────────────────────────────
+$('#cmds').innerHTML = COMMANDS.map((c) => `
+  <button class="cmd" data-id="${c.id}">
+    <span class="cmd-name">${c.name}</span>
+    <span class="cmd-go" aria-hidden="true">▶</span>
+    <span class="cmd-desc">${c.desc}</span>
+  </button>`).join('');
+
+document.querySelectorAll('.cmd').forEach((btn) => {
+  btn.addEventListener('click', () => run(btn.dataset.id));
+});
+
+function setRunning(state) {
+  running = state;
+  document.querySelectorAll('.cmd').forEach((b) => { b.disabled = state; });
+  $('#runhint').textContent = state ? 'running…' : '';
+}
+
+async function run(id) {
+  if (running) return;
+  const lang = langEl.value;
+  const btn = document.querySelector(`.cmd[data-id="${id}"]`);
+  document.querySelectorAll('.cmd').forEach((b) => b.removeAttribute('data-state'));
+  btn.dataset.state = 'running';
+  setRunning(true);
+
+  append(`$ ${COMMANDS.find((c) => c.id === id).name} -- --lang ${lang}`, 'cmdline');
+
+  try {
+    const res = await fetch('/api/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: id, lang }),
+    });
+    const out = await res.json();
+    btn.dataset.state = out.ok ? 'ok' : 'fail';
+    if (out.ok && id === 'preview') showPreview(lang);
+    if (out.ok && (id === 'build' || id === 'content')) refreshState();
+    if (out.ok && id === 'build') showPreview(lang, true);
+  } catch (err) {
+    append(`console error: ${err.message}`, 'bad');
+    btn.dataset.state = 'fail';
+  } finally {
+    setRunning(false);
+    refreshState();
+  }
+}
+
+// ── streamed output ─────────────────────────────────────────────────────────
+function classify(line) {
+  if (/^\s*✅|passed|Done\b/.test(line)) return 'ok';
+  if (/^\s*❌|Failed|Error|ERR_/.test(line)) return 'bad';
+  if (/^\s*⚠/.test(line)) return 'warn';
+  if (/^\s*(▶|━|╔|║|╚|·)/.test(line)) return 'step';
+  return '';
+}
+function append(text, cls) {
+  const div = document.createElement('div');
+  div.className = cls ?? classify(text);
+  div.textContent = text;
+  logEl.appendChild(div);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+const events = new EventSource('/api/events');
+events.addEventListener('out', (e) => append(JSON.parse(e.data).line));
+$('#clearlog').addEventListener('click', () => { logEl.textContent = ''; });
+
+// ── preview ─────────────────────────────────────────────────────────────────
+function showPreview(lang, keepEmptyOnFail) {
+  const url = `/preview/?cr_lang=${encodeURIComponent(lang)}&t=${Date.now()}`;
+  deviceEl.classList.remove('empty');
+  deviceEl.innerHTML = `<iframe src="${url}" title="Word Smash preview (${lang})"
+    allow="autoplay" sandbox="allow-scripts allow-same-origin"></iframe>`;
+  $('#reload').hidden = false;
+  $('#reload').dataset.lang = lang;
+}
+$('#reload').addEventListener('click', (e) => {
+  const lang = e.target.dataset.lang || langEl.value;
+  deviceEl.innerHTML = `<iframe src="/preview/?cr_lang=${encodeURIComponent(lang)}&reset=1&t=${Date.now()}"
+    title="Word Smash preview (${lang})" allow="autoplay" sandbox="allow-scripts allow-same-origin"></iframe>`;
+});
+
+document.querySelectorAll('.ar-btn').forEach((b) => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.ar-btn').forEach((o) => o.setAttribute('aria-pressed', 'false'));
+    b.setAttribute('aria-pressed', 'true');
+    deviceEl.style.setProperty('--ar', b.dataset.ar);
+    $('#arnote').textContent = `${Number(b.dataset.ar).toFixed(3)}:1`;
+  });
+});
+$('#arnote').textContent = '2.167:1';
+
+// ── status ──────────────────────────────────────────────────────────────────
+async function refreshState() {
+  const s = await (await fetch('/api/state')).json();
+
+  if (!langEl.options.length) {
+    langEl.innerHTML = s.languages
+      .map((l) => `<option value="${l.code}">${l.label}</option>`).join('');
+  }
+  const lang = langEl.value || s.languages[0]?.code;
+  const cur = s.languages.find((l) => l.code === lang) || {};
+
+  $('#status').innerHTML = `
+    <div class="stat"><dt>Levels in ${lang}</dt><dd>${cur.levels ?? '—'}</dd></div>
+    <div class="stat"><dt>Word entries</dt><dd>${cur.words ?? '—'}</dd></div>
+    <div class="stat"><dt>Recordings on disk</dt><dd>${cur.audio ?? '—'}</dd></div>
+    <div class="stat"><dt>Language ZIP</dt><dd>${cur.zip ?? 'not built'}</dd></div>
+    <div class="stat"><dt>Engine ZIP</dt><dd>${s.engineZip ?? 'not built'}</dd></div>
+    <div class="stat"><dt>CMS credentials</dt><dd>
+      <span class="pill ${s.credentials ? 'on' : 'off'}">${s.credentials ? 'set' : 'not set'}</span>
+    </dd></div>`;
+
+  $('#livecmd').textContent = `pnpm game:upload -- --lang ${lang} --live`;
+}
+langEl.addEventListener('change', refreshState);
+$('#refresh').addEventListener('click', refreshState);
+$('#copylive').addEventListener('click', async () => {
+  await navigator.clipboard.writeText($('#livecmd').textContent);
+  $('#copylive').textContent = 'Copied';
+  setTimeout(() => { $('#copylive').textContent = 'Copy'; }, 1400);
+});
+
+refreshState();
+</script>
+</body>
+</html>

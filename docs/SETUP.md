@@ -5,7 +5,9 @@
 From a fresh clone to a running game. Should take about five minutes.
 
 **In Claude Code, just run `/getstarted`** — it walks the whole thing, then
-`/console` puts you in front of the running game. This page is the manual path
+`/console` puts you in front of the running game. If you have not installed
+Claude Code yet, start at [ONBOARDING.md](ONBOARDING.md), which covers the
+desktop app, the VS Code extension, and the CLI. This page is the manual path
 and the reference for when something goes wrong.
 
 Every step below was verified on a clean clone on macOS (Apple Silicon).
@@ -174,6 +176,7 @@ editor buffer.
 
 ## Where to go next
 
+- [Onboarding](ONBOARDING.md) — installing Claude Code and the first-hour tour
 - [Content pipeline](CONTENT_PIPELINE.md) — how sheet content becomes a release,
   and how to add a word or a language
 - [README](../README.md) — workspace overview and the artifact map

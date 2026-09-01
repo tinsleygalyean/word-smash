@@ -23,8 +23,14 @@ Start the Word Smash console and show it to the user.
    `--no-open` is deliberate: this command opens the Browser pane itself, so the
    script should not also launch the user's external browser.
 
-3. Open `http://localhost:23522/` in the Browser pane with `preview_start`, then
-   take one screenshot so the user can see it.
+3. Show it to the user:
+
+   - **If a Browser pane tool is available** (the desktop app): open
+     `http://localhost:23522/` with `preview_start`, then take one screenshot.
+   - **Otherwise** (VS Code extension, CLI, or any surface without a Browser
+     pane): do not try to open it. Just give the user the URL as a clickable
+     link and tell them to open it in their own browser. The console is a normal
+     local web page and works the same there.
 
 4. Tell the user in one or two lines what they can do: pick a language, run any
    of the four commands, and watch the preview in the phone-landscape frame.

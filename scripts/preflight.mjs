@@ -57,7 +57,9 @@ has("git") ? ok("git", "on PATH") : bad("git", "not found", "install git");
 const zips = ["zip", "unzip"].filter((c) => !has(c));
 zips.length
   ? bad("zip / unzip", `missing: ${zips.join(", ")}`,
-        "needed to build the container ZIPs — on Debian/Ubuntu: sudo apt install zip unzip")
+        process.platform === "win32"
+          ? "needed to build the container ZIPs; native Windows has neither — use WSL 2 (see docs/ONBOARDING.md)"
+          : "needed to build the container ZIPs — on Debian/Ubuntu: sudo apt install zip unzip")
   : ok("zip / unzip", "on PATH");
 
 // ── dependencies ────────────────────────────────────────────────────────────

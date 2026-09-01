@@ -19,9 +19,10 @@ artifacts, workflows, approvals, secrets, verification, and a portable
 Claude-oriented blueprint—read the
 [Repository AI Onboarding Playbook](docs/REPLIT_AGENT_PLAYBOOK.md).
 
-New here? In Claude Code run **`/getstarted`** to set up a fresh clone, then
-**`/console`** to build and play. The manual path is in
-[docs/SETUP.md](docs/SETUP.md).
+New here? Start with **[docs/ONBOARDING.md](docs/ONBOARDING.md)** — setup for the
+Claude Code desktop app, the VS Code extension, or the CLI. In short: run
+**`/getstarted`** to set up a fresh clone, then **`/console`** to build and play.
+The manual path is in [docs/SETUP.md](docs/SETUP.md).
 
 Level content lives in a Google Sheet, not in the repository. To change words or
 levels, edit the sheet and rebuild—see the
@@ -178,6 +179,7 @@ safely. Both parties should pause when scope, evidence, or approval changes.
 - `scripts/` — repository automation, including the CMS upload client.
 - `docs/specs/` — living Word Smash specification chain.
 - `docs/CONTENT_PIPELINE.md` — sheet → JSON → ZIPs → CMS, and the commands for it.
+- `docs/ONBOARDING.md` — new-developer start: desktop app, VS Code, or CLI.
 - `docs/SETUP.md` — first-time setup on a developer machine.
 - `.local/skills/` — Replit Agent's on-demand operating instructions. These are
   useful source material but do not become available automatically to other AIs.

@@ -248,9 +248,32 @@ script.
 Nothing about this weakens the `minimumReleaseAge` supply-chain safeguard in the
 same file. That setting is unrelated and must stay on.
 
-> **Root cause:** `package.json` has no `packageManager` field, so corepack
-> installs whichever pnpm it resolves to and different developers silently get
-> different majors. Pinning it would stop this class of problem.
+### The pnpm version is pinned
+
+The underlying cause of the above was that nothing pinned pnpm, so corepack
+resolved whichever version it liked and developers silently ended up on
+different majors. `package.json` now pins it:
+
+```json
+"packageManager": "pnpm@11.25.0"
+```
+
+Two different mechanisms honor that field, which is why it works everywhere:
+
+- **corepack** reads it and runs exactly that version.
+- **pnpm itself** compares its own version against it and, because `pmOnFail`
+  defaults to `download`, downloads and runs the declared version on a
+  mismatch rather than failing. So this holds on Replit too, whatever pnpm the
+  workspace provisions.
+
+Use the `packageManager` field, **not** `devEngines.packageManager`. pnpm 11
+prefers `devEngines`, but corepack does not read it, and declaring both makes
+pnpm warn `Cannot use both 'packageManager' and 'devEngines.packageManager'`
+and ignore `packageManager` — which would break the corepack path this project
+tells you to use. The version must be exact; a range like `pnpm@^11.0.0` fails
+with `Invalid package manager specification`.
+
+To move to a newer pnpm, edit that one line and commit it.
 
 ---
 
@@ -312,6 +335,10 @@ actions require credentials, external side effects, and human approval.
 ---
 
 ## Changelog
+
+2026-09-04 — Claude & David Sturman — Explained the pnpm 11 `allowBuilds`
+migration behind `ERR_PNPM_IGNORED_BUILDS`, and documented the new
+`packageManager` pin and why it uses `packageManager` rather than `devEngines`
 
 2026-09-02 — Claude & David Sturman — Recast as a reference and troubleshooting
 page rather than a second onboarding path; removed the `/getstarted` ordering

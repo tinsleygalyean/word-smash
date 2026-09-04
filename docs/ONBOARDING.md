@@ -128,6 +128,11 @@ node --version && pnpm --version && git --version && zip -v | head -2
 
 `node --version` must print `v24.x`.
 
+You do **not** need to pick a pnpm version. `package.json` pins one
+(`"packageManager": "pnpm@11.25.0"`), and corepack fetches exactly that on first
+use — so `pnpm --version` may report a version you never installed. That is
+working as intended; see [SETUP.md](SETUP.md#the-pnpm-version-is-pinned).
+
 ---
 
 ## Step 3 — Get the code
@@ -339,6 +344,9 @@ A good first task — end to end, and reversible:
 ---
 
 ## Changelog
+
+2026-09-04 — Claude & David Sturman — Noted that the pnpm version is pinned by
+`package.json` and fetched by corepack, so no version choice is needed
 
 2026-09-02 — Claude & David Sturman — Restructured into a single ordered setup
 path; clone now precedes `/getstarted`; environment (Replit / desktop / VS Code

@@ -16,6 +16,12 @@
 // SAFETY: the upload action always runs as a DRY RUN. A live CMS upload needs a
 // typed confirmation and stays a deliberate terminal action — a browser button
 // is the wrong gate for an external write.
+//
+// UI GOTCHA: console.html must never call confirm(), alert(), or prompt(). The
+// desktop Browser pane suppresses modal dialogs and a suppressed confirm()
+// returns false, so guarded actions silently do nothing — while still working
+// in a normal browser tab. Arm destructive buttons in-page instead; see the
+// note at the top of the <script> block in console.html.
 
 import { execFile, execFileSync } from "node:child_process";
 import fs from "node:fs";

@@ -24,6 +24,7 @@ repeat another's content.
 | — | [docs/SETUP.md](docs/SETUP.md) | *Reference.* Manual setup, rationale, troubleshooting | Onboarding — consult when something breaks |
 | — | [docs/specs/README.md](docs/specs/README.md) | What is the product supposed to do? | This page |
 | — | [docs/REPLIT_AGENT_PLAYBOOK.md](docs/REPLIT_AGENT_PLAYBOOK.md) | How do AI and humans split work here? | This page |
+| — | [AGENTS.md](AGENTS.md) | *For AIs.* What are the standing rules and non-negotiables? | This page |
 
 **In one line:** install prerequisites → clone → open the repo in Claude Code →
 `/getstarted` → `/console`. [Onboarding](docs/ONBOARDING.md) walks all of it,
@@ -50,6 +51,8 @@ A pnpm/TypeScript monorepo with three registered artifacts:
 - `artifacts/mockup-sandbox/` — design/component canvas.
 - `lib/` — shared workspace libraries.
 - `scripts/` — repository automation, including the CMS upload client.
+- `AGENTS.md` — standing rules for any AI working here; `CLAUDE.md` is a
+  one-line import of it so Claude Code loads it automatically.
 - `docs/` — onboarding, setup, content pipeline, the AI playbook, and specs.
 - `.claude/commands/` — this repo's Claude Code slash commands (`/getstarted`,
   `/console`). They exist only when Claude Code has the repository root open.
@@ -112,10 +115,17 @@ affected document and reconcile all downstream references.
 
 ## Working here with Claude or another coding AI
 
+[`AGENTS.md`](AGENTS.md) holds the standing rules for any AI working in this
+repository: the non-negotiables, the generated files that must not be hand-edited,
+and the architecture details that are easy to get wrong. Claude Code loads it
+automatically through [`CLAUDE.md`](CLAUDE.md), and Replit Agent is pointed at it
+from [`replit.md`](replit.md). Any other AI should be told to read it.
+
 Give the AI the request, then ask it to:
 
-1. Read this README, the [AI playbook](docs/REPLIT_AGENT_PLAYBOOK.md),
-   [`replit.md`](replit.md), and [`docs/specs/README.md`](docs/specs/README.md).
+1. Read [`AGENTS.md`](AGENTS.md) — the authoritative agent brief — then this
+   README, the [AI playbook](docs/REPLIT_AGENT_PLAYBOOK.md), and
+   [`docs/specs/README.md`](docs/specs/README.md).
 2. Read only the product specs and reusable skills relevant to the request.
 3. Inspect the current code and existing work before assuming the docs are current.
 4. Separate verified repository facts from platform facts and recommendations.
@@ -125,7 +135,7 @@ Give the AI the request, then ask it to:
 
 A useful opening prompt:
 
-> Read `README.md`, `docs/REPLIT_AGENT_PLAYBOOK.md`, `replit.md`, and
+> Read `AGENTS.md`, `README.md`, `docs/REPLIT_AGENT_PLAYBOOK.md`, and
 > `docs/specs/README.md`. Then inspect the files and only the skills relevant to
 > my request. Report what is verified, identify any ambiguity or existing
 > overlapping work, and propose a plan and checks before making changes.

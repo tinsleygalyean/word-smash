@@ -1,72 +1,76 @@
 # Word Smash
 
-An offline literacy web game for children ages 4–8 built for Curious Learning's Curious Reader container (offline-first Android/iOS WebView from `file://`). Children smash words with a hammer, scatter letter tiles, then drag them back to rebuild the word.
+An offline literacy web game for children ages 4–8 built for Curious Learning's
+Curious Reader container (offline-first Android/iOS WebView from `file://`).
+Children smash words with a hammer, scatter letter tiles, then drag them back to
+rebuild the word.
 
-## Run & Operate
+## Read AGENTS.md first
 
-- `pnpm content:build` — regenerate language JSON from the Google Sheet (source of truth for levels/words)
-- `pnpm game:build` — content + offline bundle + engine/language ZIPs
-- `pnpm game:preview` — serve a built language from `dist/standalone` (port 23520)
-- `pnpm game:upload` — upload all languages to the CMS (dry run unless `--live`)
-- `pnpm game:console` — local control panel for all four commands + phone-landscape preview (port 23522)
-- See `docs/CONTENT_PIPELINE.md` for the whole path
-- `pnpm --filter @workspace/word-smash run dev` — run the game (port 23518, preview at `/`)
-- `pnpm --filter @workspace/word-smash run package:container` — build the Curious Reader upload ZIPs (`--lang <code>`, default `english`) into `artifacts/word-smash/dist/container/`
-- `pnpm --filter @workspace/scripts run upload:wordsmash` — regenerate the ZIPs and upload them through the Curious Reader CMS MCP endpoint (`--lang <code>`; dry-runs unless `CR_CMS_SERVER_URL` + `CR_MCP_API_KEY` are set). See `artifacts/word-smash/UPLOAD.md`.
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 8080)
-- `pnpm run typecheck` — full typecheck across all packages
+**`AGENTS.md` in the repository root is the authoritative agent brief** — the
+non-negotiables, the generated files you must not hand-edit, the commands worth
+running, and the architecture details that are easy to get wrong. Read it before
+making changes. This file is the Replit-side entry point and deliberately does
+not repeat it.
 
-## Stack
+Then: [`README.md`](README.md) maps every document,
+[`docs/REPLIT_AGENT_PLAYBOOK.md`](docs/REPLIT_AGENT_PLAYBOOK.md) covers the
+AI/human split, and `docs/specs/` (PRD → DEVSPEC → UISPEC → TESTSPEC) is
+authoritative for behavior.
 
-- pnpm workspaces, Node.js 24, TypeScript 5.9
-- Game: React 19 + Vite (react-vite artifact at `/`)
-- No backend needed for the game — pure client-side with localStorage
-- Audio: Web Audio API foley + Web Speech API TTS fallback (ElevenLabs MP3s deferred to M2)
-- Persistence: localStorage (progress, plaques, hammer stage)
+## Non-negotiables
 
-## Where things live
+Repeated here because a miss is expensive; `AGENTS.md` has the detail.
 
-- `artifacts/word-smash/` — the game itself (react-vite artifact)
-  - `src/game/` — core engine: types, audio, storage, events, physics
-  - `src/components/` — React game components
-  - `public/lang/english/wordsmash.json` — GENERATED from the levels Google Sheet by `scripts/build-content.mjs`; edit the sheet, not this file
-  - `content.config.json` — sheet ID and the tab for each language
-  - `upload/wordsmash-icon-512.png` — true-PNG 512×512 tile icon (uploaded as `iconBase64`; never packed in a ZIP)
-  - `DECISIONS.md` — architecture decisions and offline constraints
-  - `UPLOAD.md` — Curious Reader CMS MCP upload guide (sequence, exact args, prerequisites)
-- `scripts/src/upload-wordsmash.ts` (`@workspace/scripts`) — the MCP uploader driving `list_inventory` → `upload_core_game` → `upload_language_pack`
-- `artifacts/api-server/` — unused for M1, available for future leaderboard/analytics
+- **pnpm only.** A `preinstall` guard rejects npm and yarn.
+- **`minimumReleaseAge: 1440` in `pnpm-workspace.yaml` stays on.** Never lower
+  or remove it to make an install succeed.
+- **The game must run offline.** No `fetch()`, no `<audio>`, no CDN
+  `<script>`/`<link>`/`@import`. Load binaries via XHR. The release build fails
+  on these patterns.
+- **`public/lang/<code>/wordsmash.json` is generated** from the Word Smash
+  levels Google Sheet by `pnpm content:build`. Edit the sheet, not the JSON.
+- **Live uploads and publishing are human decisions.** `pnpm game:upload`
+  dry-runs unless `--live`.
+- **Never commit `.env`.**
 
-## Architecture decisions
+## Replit specifics
 
-- All binaries (audio, JSON) loaded via `loadBinary()` XHR — required for `file://` offline WebView
-- Game state in a single `useReducer` in `GameScene.tsx`; side effects (audio, localStorage) called imperatively in handlers, never in the reducer
-- Audio: tries XHR → AudioBuffer; falls back to `speechSynthesis.speak()` for dev (no real MP3 files in M1); foley synthesised via Web Audio oscillators
-- Fonts: Google Fonts CDN at dev time; must be bundled as WOFF2 via FontFace ArrayBuffer for M2 offline APK
-- cr_event bridge: `window.ReactNativeWebView?.postMessage()` — silent no-op outside Curious Reader container
+Ports, services, and preview paths — the part that is only true on this platform.
 
-## Product
+| Artifact | Package | Preview | Dev command |
+|---|---|---|---|
+| Word Smash | `@workspace/word-smash` | `/` | `pnpm --filter @workspace/word-smash run dev` (port 23518) |
+| API Server | `@workspace/api-server` | `/api` | `pnpm --filter @workspace/api-server run dev` (port 8080) |
+| Canvas | `@workspace/mockup-sandbox` | `/__mockup` | — |
 
-M1 (complete): English levels 1–4 playable — ghost-letter and no-ghost word groups (2-phoneme digraph words, CVC words). Hammer smash, scatter, drag-to-rebuild, plaque wall, hammer evolution, localStorage persistence, tutorial hand icon.
+Other local ports: `pnpm game:preview` serves a built language on 23520,
+`pnpm game:console` runs the control panel on 23522.
 
-M2 (complete): Phoneme-sound TTS (says /b/ "buh", never letter names), level indicator fix, self-hosted WOFF2 font via FontFace ArrayBuffer, `vite.standalone.config.ts` (`build:standalone` → `dist/standalone/`, base `./`) for the offline APK bundle, levels 5–10 playable.
+The API server is unused by the current offline game; it exists for possible
+future leaderboard/analytics work.
 
-Redesign ("Honey & Paint", complete): Full visual + interaction redesign to the approved contract in `attached_assets/word_smash_design/handoff/DESIGN-SPEC.md`. Fixed 1200×540 reference canvas, cover-scaled to the device; all geometry in reference coords. No text/emoji/mascot in gameplay. Phases: loading→present→windup→rebuild→complete→levelComplete. 10-stage hammer evolution, plaque wall with drag-to-replay and replay-count finishes.
+Workspace members are discovered under `artifacts/*`, `lib/*`,
+`lib/integrations/*`, and `scripts`. Stack: pnpm workspaces, Node.js 24,
+TypeScript 5.9, React 19 + Vite. No backend for the game — client-side with
+localStorage.
 
-M3 (complete): Real recorded MP3 audio via ElevenLabs TTS at `public/lang/english/audios/` (144 files: word slow/natural + per-word phoneme/syllable units). Synthesised from phonetic spellings (b→"buh", never "b") so letter names can never be spoken; vowels/ambiguous letters spelled per word context. Web Speech TTS is now a fallback only. `resolveAudioPaths()` in `App.tsx` fixes relative audio-path resolution for both dev and the offline bundle.
+Change `.replit-artifact/artifact.toml` only through Replit's artifact tools,
+never by editing the file.
+
+## Command and product reference
+
+- Commands: [`README.md`](README.md) has the full map;
+  [`docs/CONTENT_PIPELINE.md`](docs/CONTENT_PIPELINE.md) explains the sheet →
+  release path.
+- Where things live: [`README.md`](README.md) directory guide.
+- Architecture rationale:
+  [`artifacts/word-smash/DECISIONS.md`](artifacts/word-smash/DECISIONS.md).
+- Upload sequence: [`artifacts/word-smash/UPLOAD.md`](artifacts/word-smash/UPLOAD.md).
+- Milestone status and history: [`docs/specs/PRD.md`](docs/specs/PRD.md) §6
+  "Scope & milestone history" is the source of truth. M1, M2, the "Honey & Paint"
+  redesign, and M3 (recorded MP3 audio) are all complete.
 
 ## User preferences
 
 _Populate as you build._
-
-## Gotchas
-
-- Do NOT use `fetch()`, `<audio>`, or CDN script tags — offline WebView blocks them. Use `loadBinary()` XHR for all external assets.
-- `file://` XHR returns status 0 on success (not 200) — the JSON/binary loaders already handle this.
-- Run `pnpm run typecheck` from workspace root before testing — leaf artifact typechecks need fresh lib declarations.
-- Google Fonts `@import` in CSS works for dev but must be replaced with self-hosted WOFF2 for the offline APK build.
-
-## Pointers
-
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
-- See `artifacts/word-smash/DECISIONS.md` for detailed architecture decisions

@@ -199,6 +199,17 @@ function main() {
       return;
     }
 
+    if (p === "/api/kill" && req.method === "POST") {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true }));
+      console.log("\n⏹ Kill requested from the console UI — shutting down.\n");
+      server.close(() => process.exit(0));
+      // Force the exit even if a keep-alive connection (e.g. /api/events) is
+      // still open and blocking server.close()'s callback.
+      setTimeout(() => process.exit(0), 200).unref();
+      return;
+    }
+
     if (p === "/api/run" && req.method === "POST") {
       const { action, lang } = await readBody(req);
       const reply = (code, body) => {

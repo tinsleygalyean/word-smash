@@ -147,6 +147,26 @@
     padding:5px 11px;font-size:12px;cursor:pointer;color:var(--ink-dim);
   }
   .ghost-btn:hover{border-color:var(--honey-lo);color:var(--ink)}
+  .ghost-btn.danger{color:#e89680;border-color:rgba(201,85,62,.42)}
+  .ghost-btn.danger:hover{background:var(--terracotta);border-color:var(--terracotta);color:var(--paper)}
+
+  /* Whole page dims once the server is gone — nothing on it works any more. */
+  body.dead{opacity:.5;pointer-events:none}
+  #gone{
+    position:fixed;inset:0;display:none;place-items:center;z-index:50;
+    background:rgba(28,22,17,.82);pointer-events:auto;
+  }
+  body.dead #gone{display:grid}
+  #gone div{
+    background:var(--wood-800);border:1px solid var(--line);border-radius:var(--radius);
+    padding:22px 26px;text-align:center;max-width:380px;opacity:1;
+  }
+  #gone p{color:var(--ink-dim);font-size:13px;margin-top:8px}
+  #gone h2{font-family:var(--font-display);font-size:16px;color:var(--paper)}
+  #gone code{
+    font-family:var(--font-mono);background:var(--wood-900);
+    padding:1px 6px;border-radius:4px;color:var(--cream);
+  }
 
   /* ── live-upload notice ───────────────────────────────────────────────── */
   .notice{
@@ -178,6 +198,7 @@
     <label for="lang">Language</label>
     <select id="lang"></select>
   </div>
+  <button class="ghost-btn danger" id="kill">Kill console server</button>
 </header>
 
 <main>
@@ -232,6 +253,14 @@
     </section>
   </div>
 </main>
+
+<div id="gone">
+  <div>
+    <h2>Console server stopped</h2>
+    <p>This page is no longer connected to anything. Start it again with
+       <code>pnpm game:console</code>.</p>
+  </div>
+</div>
 
 <script>
 const COMMANDS = [
@@ -366,6 +395,21 @@ $('#copylive').addEventListener('click', async () => {
   await navigator.clipboard.writeText($('#livecmd').textContent);
   $('#copylive').textContent = 'Copied';
   setTimeout(() => { $('#copylive').textContent = 'Copy'; }, 1400);
+});
+
+// ── kill the server ─────────────────────────────────────────────────────────
+$('#kill').addEventListener('click', async () => {
+  const warning = running
+    ? 'A command is still running. Stop the console server anyway?'
+    : 'Stop the console server? This page will stop working.';
+  if (!confirm(warning)) return;
+
+  append('$ stopping console server', 'cmdline');
+  // The server exits while replying, so a dropped connection here is success,
+  // not an error worth reporting.
+  try { await fetch('/api/kill', { method: 'POST' }); } catch {}
+  events.close();
+  document.body.classList.add('dead');
 });
 
 refreshState();

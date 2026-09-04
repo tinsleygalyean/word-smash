@@ -1,137 +1,290 @@
-# Onboarding: your first hour with Word Smash
+# Onboarding: get Word Smash running
 
-**Status:** Active · **Last updated:** 2026-08-31
+**Status:** Active · **Last updated:** 2026-09-02
 
-Word Smash is an offline literacy game for children ages 4–8. It runs inside
-Curious Learning's Curious Reader app, from a local `file://` WebView with **no
-network** — a constraint that shapes most of the codebase.
+> **Read before this page:** [README.md](../README.md) — what Word Smash is and
+> how the repository is laid out. Five minutes.
+>
+> **Read after this page:** [CONTENT_PIPELINE.md](CONTENT_PIPELINE.md) — how to
+> actually change a word or add a language.
+>
+> **If a step on this page fails:** [SETUP.md](SETUP.md) — the manual path and a
+> troubleshooting table that maps every common error to its fix. Do not read
+> SETUP.md first; it assumes you have already been here.
 
-This page gets you from nothing to a running game using Claude Code. Pick your
-surface below; after setup the two are identical.
-
-**The short version:** install Claude Code → clone the repo → open it → run
-`/getstarted` → run `/console`.
-
----
-
-## Before you start
-
-| You need | Notes |
-|---|---|
-| A paid Claude plan | Pro, Max, Team, Enterprise, or a Console account. The free plan does not include Claude Code |
-| **Node.js 24** | The version matters — 25 and 20 both break the tests. See [SETUP.md](SETUP.md) |
-| git | On Windows, [Git for Windows](https://git-scm.com/downloads/win) |
-
-> **Windows: use WSL 2.** The release packaging shells out to the `zip` and
-> `unzip` commands, which native Windows does not provide. Everything else works
-> natively, but `pnpm game:build` will fail until you are in WSL (or you install
-> those tools yourself). Install Claude Code *inside* your WSL distribution, and
-> keep the clone on the Linux side.
+This page is the **only** setup path you need. It takes you from an empty machine
+to a playable game. Everything is labelled by **where you are working**
+(Replit, Claude Code desktop, VS Code, CLI) and by **operating system**
+(macOS, Windows, Ubuntu).
 
 ---
 
-## Option A — Claude Code desktop app
+## The shape of it
 
-A graphical app with a sidebar, a terminal, a diff viewer, and a browser pane.
-Nothing to install beyond the app itself; it includes Claude Code.
+Five steps, in this order. Do not skip ahead — step 4 cannot run before step 3,
+because the setup command lives *inside* the repository.
 
-1. **Download and install**
+| # | Step | Section |
+|---|---|---|
+| 1 | Pick your environment | [Step 1](#step-1--pick-your-environment) |
+| 2 | Install prerequisites for your OS | [Step 2](#step-2--install-prerequisites-by-os) |
+| 3 | Get the code onto the machine | [Step 3](#step-3--get-the-code) |
+| 4 | Run setup | [Step 4](#step-4--run-setup) |
+| 5 | Build and play | [Step 5](#step-5--build-and-play) |
+
+**Replit users:** steps 2 and 3 are already done for you. Jump to
+[the Replit path](#environment-replit).
+
+---
+
+## Step 1 — Pick your environment
+
+Four supported places to work. Pick one now; steps 3, 4 and 5 differ between
+them.
+
+| Environment | Best for | Setup command | Can run `/console`? |
+|---|---|---|---|
+| **Claude Code desktop app** | Most people. Recommended | `/getstarted` | ✅ Yes — renders in the app's Browser pane |
+| **Claude Code VS Code extension** | You already live in VS Code | `/getstarted` | ✅ Yes — you open the URL in your own browser |
+| **Claude Code CLI** | Terminal-only, remote machines | `/getstarted` | ✅ Yes — you open the URL in your own browser |
+| **Replit** | Where this repo runs in production | Shell commands, not slash commands | ❌ **No** — see below |
+
+> **Why Replit cannot run the console.** The console server binds to
+> `127.0.0.1` only, so nothing outside the machine can reach it — including
+> Replit's public preview proxy. On Replit, use the artifact's managed workflow
+> to see the game instead.
+
+Claude Code needs a **paid Claude plan** (Pro, Max, Team, Enterprise, or a
+Console account). The free plan does not include it. Replit does not need a
+Claude plan.
+
+---
+
+## Step 2 — Install prerequisites, by OS
+
+**Skip this entire step on Replit** — the workspace already provides Node 24,
+pnpm, git, and zip/unzip.
+
+You need four things everywhere: **Node.js 24**, **pnpm**, **git**, and the
+**`zip`/`unzip`** command-line tools.
+
+> **Node 24 exactly.** Not 25, not 20. Node 25 ships a built-in global
+> `localStorage` that shadows jsdom's and all 124 tests fail; Node 20 is too old
+> for jsdom 30. This is the single most common cause of a broken setup —
+> [SETUP.md](SETUP.md#why-node-24-exactly) has the detail.
+
+### macOS
+
+`zip` and `unzip` are already present. Install git via the Xcode command line
+tools if you do not have it:
+
+```bash
+xcode-select --install
+```
+
+Then Node 24 with [nvm](https://github.com/nvm-sh/nvm), and pnpm via corepack:
+
+```bash
+nvm install 24 && nvm use 24 && corepack enable
+```
+
+### Windows
+
+**Use WSL 2. Not native Windows.** Release packaging shells out to the `zip` and
+`unzip` commands, which Windows does not provide, so `pnpm game:build` fails
+natively. Install a Linux distribution:
+
+```powershell
+wsl --install -d Ubuntu
+```
+
+Then — and this matters — do everything else **inside** WSL:
+
+- Install Claude Code *in the WSL distribution*, not on the Windows side.
+- Keep the clone on the Linux filesystem (`~/word-smash`), not under `/mnt/c/`.
+  Cross-filesystem work is slow and causes permission and line-ending surprises.
+- Follow the **Ubuntu** instructions below from your WSL shell.
+
+In the Claude Code desktop app, choose **WSL** rather than **Local** when
+opening the folder.
+
+### Ubuntu (and Debian, and WSL 2)
+
+```bash
+sudo apt update && sudo apt install -y git zip unzip curl
+```
+
+Install [nvm](https://github.com/nvm-sh/nvm) following its README, then:
+
+```bash
+nvm install 24 && nvm use 24 && corepack enable
+```
+
+### Confirm
+
+```bash
+node --version && pnpm --version && git --version && zip -v | head -2
+```
+
+`node --version` must print `v24.x`.
+
+---
+
+## Step 3 — Get the code
+
+**On Replit, skip to [the Replit path](#environment-replit).**
+
+The repository must exist on disk *before* step 4, because `/getstarted` is a
+slash command defined inside this repository. Claude Code cannot see it until
+the repo is your open project.
+
+The clone command is the same in all three Claude Code environments:
+
+```bash
+git clone -b feat/content-pipeline-and-console https://github.com/tinsleygalyean/word-smash.git word-smash
+```
+
+> The `-b` flag is temporary: the setup and console work lives on
+> `feat/content-pipeline-and-console` until it merges. Once it is on `main`,
+> drop `-b …` and clone the default branch. `main` and the branch differ in
+> their pnpm build-approval config, which can confuse a shared `node_modules` —
+> see [SETUP.md](SETUP.md#troubleshooting).
+
+Then open it, per environment:
+
+### Environment: Claude Code desktop app
+
+1. Install and sign in:
    [macOS](https://claude.ai/api/desktop/darwin/universal/dmg/latest/redirect) ·
    [Windows](https://claude.ai/api/desktop/win32/x64/setup/latest/redirect) ·
    [Linux (beta)](https://code.claude.com/docs/en/desktop-linux).
-   Launch it and sign in with your Anthropic account.
+2. Open the built-in terminal with ``Ctrl+` `` and run the clone command above.
+3. Click the **Code** tab → **Local** → **Select folder** → pick the
+   `word-smash` directory. **On Windows choose WSL, not Local.**
 
-2. **Clone the repo.** Open the built-in terminal with ``Ctrl+` `` and run:
+### Environment: Claude Code VS Code extension
 
-   ```bash
-   git clone -b feat/content-pipeline-and-console https://github.com/tinsleygalyean/word-smash.git word-smash
-   ```
-
-   (Once that branch is merged, drop the `-b …` and clone `main`.)
-
-3. **Open the project.** Click the **Code** tab at the top, choose **Local**,
-   then **Select folder** and pick the `word-smash` directory you just cloned.
-   On Windows choose **WSL** instead of Local, per the note above.
-
-4. **Run the setup command.** Type `/getstarted` in the prompt box and send it.
-
-5. **Run the console.** Type `/console`. The control panel opens in the app's
-   Browser pane with the game playing inside it.
-
-The desktop app is the better fit here: `/console` renders the control panel and
-the live game directly in the Browser pane, next to your chat.
-
-## Option B — VS Code extension
-
-1. **Install the extension.** [Install for VS Code](vscode:extension/anthropic.claude-code),
-   or press `Cmd+Shift+X` / `Ctrl+Shift+X`, search for "Claude Code", and click
-   **Install**. Requires VS Code 1.94 or newer. It also works in Cursor and other
-   VS Code forks.
-
-2. **Clone and open the repo.** In a terminal:
+1. [Install the extension](vscode:extension/anthropic.claude-code), or press
+   `Cmd+Shift+X` / `Ctrl+Shift+X`, search "Claude Code", **Install**. Needs
+   VS Code 1.94+. Works in Cursor and other forks.
+2. Clone and open in one go:
 
    ```bash
    git clone -b feat/content-pipeline-and-console https://github.com/tinsleygalyean/word-smash.git word-smash && code word-smash
    ```
 
-   Opening the repo as your VS Code workspace folder is what makes this project's
-   slash commands available.
+   Opening the repo as your **workspace folder** is what makes this project's
+   slash commands available. Opening a parent directory will not work.
+3. Open the Claude panel: the Spark icon in the Activity Bar, or Command Palette
+   (`Cmd+Shift+P` / `Ctrl+Shift+P`) → "Claude Code: Open in New Tab". Sign in.
 
-3. **Open the Claude panel.** Click the Spark icon in the Activity Bar (left
-   sidebar) or the editor toolbar, or use the Command Palette
-   (`Cmd+Shift+P` / `Ctrl+Shift+P`) → "Claude Code: Open in New Tab". Sign in
-   when prompted.
-
-4. **Run the setup command.** Type `/getstarted` in the Claude panel.
-
-5. **Run the console.** Type `/console`. There is no Browser pane in VS Code, so
-   Claude will hand you a URL — open <http://localhost:23522> in your browser.
-
-## Option C — terminal only
+### Environment: Claude Code CLI
 
 ```bash
 curl -fsSL https://claude.ai/install.sh | bash
 ```
 
-Then `cd` into the clone and run `claude`, and use `/getstarted` and `/console`
-exactly as above. Windows PowerShell uses `irm https://claude.ai/install.ps1 | iex`.
+On Windows, run that inside WSL. (Native PowerShell install is
+`irm https://claude.ai/install.ps1 | iex`, but see the Windows note in step 2.)
+
+Then clone, enter the directory, and start Claude **from inside it**:
+
+```bash
+cd word-smash && claude
+```
+
+> Starting `claude` from your home directory instead of the repo is a common
+> mistake. The slash commands will be missing and `pnpm` commands will fail with
+> `ERR_PNPM_NO_PKG_MANIFEST`. Run `pwd` if unsure.
 
 ---
 
-## What `/getstarted` actually does
+## Step 4 — Run setup
 
-It is not magic, and you can run any of it by hand — see [SETUP.md](SETUP.md).
+### Environments: desktop app, VS Code, CLI
 
-1. `pnpm preflight` — checks Node, pnpm, git, zip/unzip, dependencies, native
-   binaries, content, ZIPs, and credentials
-2. `pnpm install`
-3. `pnpm setup:native` — installs your platform's build binaries (see below)
-4. `pnpm run typecheck` and the test suite — expect **124 tests passing**
-5. `pnpm game:build` — pulls content from the Google Sheet and builds the ZIPs
-6. Offers to set up a CMS key — **say no unless you are uploading releases**
+Type this in the Claude prompt and send it:
 
-**You will be asked to approve commands.** Claude Code asks before running shell
-commands, depending on your permission mode. Approving `pnpm` commands during
-setup is expected.
+```
+/getstarted
+```
 
-### Why there is a `setup:native` step
+That is it. Claude runs the whole sequence, reports what happened, and stops if
+something needs you. **You will be asked to approve shell commands** — approving
+`pnpm` commands during setup is expected.
 
-This repo runs in production on Replit, which is linux-x64, and the workspace
-strips out every native binary for other platforms to keep that install lean.
-The side effect: on macOS, Windows, or ARM Linux a plain `pnpm install` leaves
-you with no Rollup/esbuild binary and every build fails with
-`Cannot find module '@rollup/rollup-darwin-arm64'`. `pnpm setup:native` fixes
-that without touching anything tracked by git. Re-run it after any `pnpm install`
-that recreates `node_modules`.
+What it does, in order:
 
-## What `/console` gives you
+| # | Command | Purpose |
+|---|---|---|
+| 1 | `pnpm preflight` | Audits Node, pnpm, git, zip/unzip, dependencies, native binaries, content, ZIPs, credentials |
+| 2 | `pnpm install` | Workspace dependencies |
+| 3 | `pnpm setup:native` | Your platform's build binaries. Required off linux-x64 |
+| 4 | `pnpm run typecheck` + tests | Expect **9 test files, 124 tests passing** |
+| 5 | `pnpm game:build` | Pulls content from the Google Sheet, builds the ZIPs |
+| 6 | *optional* `pnpm env:init` | A CMS key. **Say no unless you upload releases** |
 
-A local control panel at <http://localhost:23522>: a language dropdown, a button
-for each of the four pipeline commands, live streamed output, and the built game
-playing in a **phone-landscape frame** (19.5:9, 20:9, 16:9, 3:2).
+Every one of those is a plain command you can run yourself —
+[SETUP.md](SETUP.md#the-manual-path) is the same sequence in prose.
 
-It is a local server rather than a hosted page because it has to actually run
-builds on your machine.
+If `/getstarted` stops on a failure, go to
+[SETUP.md's troubleshooting table](SETUP.md#troubleshooting).
+
+### Environment: Replit
+
+Slash commands are a Claude Code feature and are not available in the Replit
+workspace; Replit has its own agent. Run the sequence from the **Shell** instead:
+
+```bash
+pnpm preflight
+```
+
+Replit already installs dependencies, and `pnpm setup:native` is a **no-op**
+there — Replit is linux-x64, which is the one platform the lockfile ships
+binaries for. So you normally need only:
+
+```bash
+pnpm run typecheck && pnpm --filter @workspace/word-smash run test
+```
+
+```bash
+pnpm game:build
+```
+
+---
+
+## Step 5 — Build and play
+
+### Environments: desktop app, VS Code, CLI
+
+```
+/console
+```
+
+That starts a local control panel on <http://localhost:23522>: a language
+dropdown, a button for each of the four pipeline commands, live streamed output,
+and the built game playing in a **phone-landscape frame** (19.5:9, 20:9, 16:9,
+3:2).
+
+How you see it depends on your environment:
+
+| Environment | What happens |
+|---|---|
+| **Desktop app** | Opens in the app's Browser pane, next to your chat. Nothing to do |
+| **VS Code** | No Browser pane exists. Claude hands you the URL — open it in your own browser |
+| **CLI** | Same: open <http://localhost:23522> yourself |
+
+It is a local server rather than a hosted page because it has to run real builds
+on your machine.
+
+Prefer a plain preview window with no control panel? `pnpm game:preview`
+(port 23520).
+
+### Environment: Replit
+
+The console will not work here (loopback bind — see step 1). Instead, start the
+Word Smash artifact's existing **managed workflow**, or use the Run button,
+which `.replit` wires to the `Project` workflow. The game previews at `/`.
 
 ---
 
@@ -139,55 +292,59 @@ builds on your machine.
 
 Three things are worth knowing before you change anything.
 
-**Level content is not in the repo.** Words and levels live in the
+**Level content is not in the repository.** Words and levels live in the
 [Word Smash levels sheet](https://docs.google.com/spreadsheets/d/1X_A1EnF4ySLp508donSBBKuL-mDYG4Ojlv7ItcWCXfo/edit),
-one tab per language. `wordsmash.json` is *generated* from it — edit the sheet,
-then run `pnpm game:build`. Hand-editing the JSON works until the next build
-overwrites it. Reading the sheet needs no credentials.
+one tab per language. `public/lang/<code>/wordsmash.json` is *generated* from it.
+Edit the sheet, then rebuild. Hand-editing the JSON works right up until the
+next build overwrites it. Reading the sheet needs no credentials.
 
-**The game must work with no network.** No `fetch()`, no `<audio>`, no CDN
-tags — every asset loads through `XMLHttpRequest`, and `file://` XHR returns
-status `0` on success. The build fails the release if it finds a forbidden
-pattern. [DECISIONS.md](../artifacts/word-smash/DECISIONS.md) has the reasoning.
+**The game must work with no network.** It runs from a local `file://` WebView
+inside Curious Reader. No `fetch()`, no `<audio>`, no CDN tags — every asset
+loads through `XMLHttpRequest`, where `file://` returns status `0` on success.
+The build *fails the release* if it finds a forbidden pattern.
+[DECISIONS.md](../artifacts/word-smash/DECISIONS.md) has the reasoning.
 
 **Uploads are gated on purpose.** `pnpm game:upload` dry-runs by default and
 contacts nothing. A real upload needs credentials *and* a typed confirmation,
-and only ever lands in the CMS development channel — promotion and publishing
-are a human decision made in the CMS.
+and only ever lands in the CMS development channel. Promotion and publishing are
+a human decision made in the CMS.
 
 ## Try something
 
-Good first task, end to end and reversible:
+A good first task — end to end, and reversible:
 
 1. Open the levels sheet and change a word's dashes — say `s-ea` to `se-a`.
 2. Run `/console`, pick English, click **`pnpm game:build`**.
-3. Watch it fail: the recordings for the new breakpoints do not exist, and the
-   build names the exact MP3s it would need. That guard is the point — a word
-   can never ship silent.
+3. Watch it fail. The recordings for the new breakpoints do not exist, and the
+   build names the exact MP3s it would need. That guard is the point: a word can
+   never ship silent.
 4. Undo your sheet edit and rebuild.
 
 ## When something breaks
 
-Run `pnpm preflight` first — it names the fix for each problem. The
-[troubleshooting table in SETUP.md](SETUP.md#troubleshooting) maps every common
-error message to its cause.
-
-You can also just ask Claude in the panel: it has this repo's docs and can read
-the failure directly.
+1. Run `pnpm preflight` — it names the exact fix beside each problem.
+2. Check the [troubleshooting table in SETUP.md](SETUP.md#troubleshooting).
+3. Ask Claude in the panel. It can read the failure and this repo's docs
+   directly.
 
 ## Where to read next
 
-| Document | For |
-|---|---|
-| [SETUP.md](SETUP.md) | The manual setup path and troubleshooting |
-| [CONTENT_PIPELINE.md](CONTENT_PIPELINE.md) | Sheet → JSON → ZIPs → CMS; adding a word or language |
-| [README](../README.md) | Workspace layout and the artifact map |
-| [Specs](specs/README.md) | `PRD → DEVSPEC → UISPEC → TESTSPEC` |
-| [AI playbook](REPLIT_AGENT_PLAYBOOK.md) | How AI and humans split work here, and the approval gates |
+| Document | Read it for | Read this first |
+|---|---|---|
+| [CONTENT_PIPELINE.md](CONTENT_PIPELINE.md) | Sheet → JSON → ZIPs → CMS; adding a word or a language | This page |
+| [SETUP.md](SETUP.md) | The manual setup path, the rationale, troubleshooting | This page |
+| [specs/README.md](specs/README.md) | `PRD → DEVSPEC → UISPEC → TESTSPEC` | [README.md](../README.md) |
+| [REPLIT_AGENT_PLAYBOOK.md](REPLIT_AGENT_PLAYBOOK.md) | How AI and humans split work here, and the approval gates | [README.md](../README.md) |
 
 ---
 
 ## Changelog
+
+2026-09-02 — Claude & David Sturman — Restructured into a single ordered setup
+path; clone now precedes `/getstarted`; environment (Replit / desktop / VS Code
+/ CLI) and OS (macOS / Windows / Ubuntu) instructions separated and labelled;
+removed duplication with SETUP.md and README.md; documented that the console
+cannot run on Replit
 
 2026-08-31 — Claude & Tinsley Galyean — Initial onboarding guide for the desktop
 app, the VS Code extension, and the CLI

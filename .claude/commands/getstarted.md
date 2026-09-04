@@ -103,7 +103,10 @@ result, the ZIPs built, and whether CMS credentials are set. Then tell them:
 
 - `/console` — the control panel: pick a language, run any pipeline command,
   play the game in a phone-landscape frame
-- `docs/SETUP.md` — the same setup path in prose, with a troubleshooting table
+- `docs/ONBOARDING.md` — the setup path this command automates, plus the mental
+  model and a good reversible first task
+- `docs/SETUP.md` — reference: the manual command sequence, why each step exists,
+  and a troubleshooting table
 - `docs/CONTENT_PIPELINE.md` — how sheet content becomes a release
 
 Do not run a live CMS upload as part of getting started. `pnpm game:upload`

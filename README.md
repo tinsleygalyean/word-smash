@@ -1,12 +1,40 @@
 # Word Smash workspace
 
+**Start here.** This page is the map: what Word Smash is, what is in the
+repository, and which document to read next. It contains no setup instructions —
+those live in [docs/ONBOARDING.md](docs/ONBOARDING.md).
+
 Word Smash is an offline literacy game for children ages 4–8. Children smash a
 word into sound units and rebuild it while hearing those sounds. The game is
 designed for Curious Learning's Curious Reader container and must run without a
 network connection from a local `file://` WebView.
 
-This repository is a pnpm/TypeScript monorepo containing three registered
-artifacts:
+---
+
+## Where to go next
+
+Read in this order. Each document names its own prerequisite, and none of them
+repeat another's content.
+
+| # | Document | Answers | Read only after |
+|---|---|---|---|
+| 1 | **This page** | What is this, and where is everything? | — |
+| 2 | **[docs/ONBOARDING.md](docs/ONBOARDING.md)** | How do I get it running on my machine? | This page |
+| 3 | [docs/CONTENT_PIPELINE.md](docs/CONTENT_PIPELINE.md) | How do I change a word, or add a language? | Onboarding |
+| — | [docs/SETUP.md](docs/SETUP.md) | *Reference.* Manual setup, rationale, troubleshooting | Onboarding — consult when something breaks |
+| — | [docs/specs/README.md](docs/specs/README.md) | What is the product supposed to do? | This page |
+| — | [docs/REPLIT_AGENT_PLAYBOOK.md](docs/REPLIT_AGENT_PLAYBOOK.md) | How do AI and humans split work here? | This page |
+
+**In one line:** install prerequisites → clone → open the repo in Claude Code →
+`/getstarted` → `/console`. [Onboarding](docs/ONBOARDING.md) walks all of it,
+separately for Replit, the Claude Code desktop app, the VS Code extension, and
+the CLI, and separately for macOS, Windows, and Ubuntu.
+
+---
+
+## What is in the repository
+
+A pnpm/TypeScript monorepo with three registered artifacts:
 
 | Artifact | Package | Purpose | Replit preview |
 |---|---|---|---|
@@ -14,123 +42,50 @@ artifacts:
 | **API Server** | `@workspace/api-server` | Supporting Express API; not used by the current offline game | `/api` |
 | **Canvas** | `@workspace/mockup-sandbox` | Component and design preview surface | `/__mockup` |
 
-For the operating model behind this workspace—including agents, tasks,
-artifacts, workflows, approvals, secrets, verification, and a portable
-Claude-oriented blueprint—read the
-[Repository AI Onboarding Playbook](docs/REPLIT_AGENT_PLAYBOOK.md).
+### Directory guide
 
-New here? Start with **[docs/ONBOARDING.md](docs/ONBOARDING.md)** — setup for the
-Claude Code desktop app, the VS Code extension, or the CLI. In short: run
-**`/getstarted`** to set up a fresh clone, then **`/console`** to build and play.
-The manual path is in [docs/SETUP.md](docs/SETUP.md).
+- `artifacts/word-smash/` — game source, language/audio assets, tests,
+  packaging, architecture decisions, and upload documentation.
+- `artifacts/api-server/` — supporting API service.
+- `artifacts/mockup-sandbox/` — design/component canvas.
+- `lib/` — shared workspace libraries.
+- `scripts/` — repository automation, including the CMS upload client.
+- `docs/` — onboarding, setup, content pipeline, the AI playbook, and specs.
+- `.claude/commands/` — this repo's Claude Code slash commands (`/getstarted`,
+  `/console`). They exist only when Claude Code has the repository root open.
+- `.local/skills/` — Replit Agent's on-demand operating instructions. Useful
+  source material, but not automatically available to other AIs.
+- `.replit-artifact/artifact.toml` inside each artifact — checked-in artifact
+  metadata; change it with the owning platform's supported artifact tools.
 
-Level content lives in a Google Sheet, not in the repository. To change words or
-levels, edit the sheet and rebuild—see the
-[Content pipeline](docs/CONTENT_PIPELINE.md).
+---
 
-## Getting started
+## Command map
 
-Requirements: Node.js 24 (the version matters) and pnpm. Run commands from the
-repository root. **Full step-by-step setup, including the extra step needed on
-any machine that is not linux-x64: [docs/SETUP.md](docs/SETUP.md).**
+Full explanations are in [CONTENT_PIPELINE.md](docs/CONTENT_PIPELINE.md); the
+manual setup and release commands are in [SETUP.md](docs/SETUP.md). This is only
+a map of what exists.
 
-```bash
-git clone <repository-url>
-cd <repository-directory>
-corepack enable
-pnpm install
-pnpm setup:native   # required off linux-x64 (macOS, Windows, ARM Linux)
+| Command | Does |
+|---|---|
+| `pnpm preflight` | Audit the machine and print the fix for anything missing |
+| `pnpm setup:native` | Install your platform's native build binaries (not needed on linux-x64) |
+| `pnpm content:build` | Sheet → language JSON, validated |
+| `pnpm game:build` | Content + engine ZIP + language ZIPs |
+| `pnpm game:preview` | Play a built language (port 23520) |
+| `pnpm game:upload` | Send to the CMS — **dry run unless `--live`** |
+| `pnpm game:console` | Control panel for all four, plus a phone-landscape preview (port 23522) |
+| `pnpm game:artifact` | Pack a language into one shareable HTML file |
+| `pnpm run typecheck` | Full typecheck across all packages |
 
-# Learn the workspace before changing it
-cat README.md
-cat docs/REPLIT_AGENT_PLAYBOOK.md
-cat replit.md
-cat docs/specs/README.md
+Add `-- --lang <code>` to any pipeline command to work on a single language.
 
-# Canonical checks
-pnpm run typecheck
-pnpm --filter @workspace/word-smash run test
-pnpm --filter @workspace/word-smash run package:container -- --lang english
-pnpm run build
-```
+**Level content is not in this repository.** Words and levels live in the
+[Word Smash levels sheet](https://docs.google.com/spreadsheets/d/1X_A1EnF4ySLp508donSBBKuL-mDYG4Ojlv7ItcWCXfo/edit),
+one tab per language; `public/lang/<code>/wordsmash.json` is generated from it.
+Edit the sheet, then rebuild.
 
-In Replit, start the artifact's existing managed workflow. Outside Replit, run
-the package command and provide the environment that the workflow normally
-injects:
-
-```bash
-# Word Smash (http://localhost:23518/)
-PORT=23518 BASE_PATH=/ \
-  pnpm --filter @workspace/word-smash run dev
-
-# API Server (http://localhost:8080/api; health at /api/healthz)
-PORT=8080 pnpm --filter @workspace/api-server run dev
-
-# Canvas (http://localhost:8081/__mockup)
-PORT=8081 BASE_PATH=/__mockup \
-  pnpm --filter @workspace/mockup-sandbox run dev
-```
-
-## Content and release commands
-
-Level content comes from the
-[Word Smash levels sheet](https://docs.google.com/spreadsheets/d/1X_A1EnF4ySLp508donSBBKuL-mDYG4Ojlv7ItcWCXfo/edit)
-(one tab per language). `public/lang/<code>/wordsmash.json` is generated from it.
-
-```bash
-pnpm content:build     # sheet → language JSON, validated
-pnpm game:build        # content + engine ZIP + language ZIPs
-pnpm game:preview      # play/test a built language (http://localhost:23520)
-pnpm game:upload       # send to the CMS — dry run unless --live
-```
-
-Add `-- --lang <code>` to any of them to work on one language, and
-`pnpm game:artifact` to pack a language into a single shareable HTML file.
-`pnpm game:console` (or `/console` in Claude Code) opens a local control panel
-that runs all four against a chosen language and previews the result at
-phone-landscape proportions.
-The full process, validation rules, and how to add a word or a language are in
-the [Content pipeline](docs/CONTENT_PIPELINE.md).
-
-Useful Word Smash release checks:
-
-```bash
-# Relative-path offline bundle only
-pnpm --filter @workspace/word-smash run build:standalone
-
-# Rebuild the bundle/ZIPs, then run offline integrity checks
-pnpm --filter @workspace/word-smash run test:bundle
-
-# Check already-built outputs without rebuilding (outputs must exist)
-pnpm --filter @workspace/word-smash run test:bundle --no-build
-
-# Show the CMS upload plan without contacting the CMS
-pnpm --filter @workspace/scripts run upload:wordsmash -- \
-  --lang english --dry-run
-```
-
-Do not run a live upload or publish based only on an AI's judgment. Those actions
-require credentials, external side effects, and human approval.
-
-## Starting a task with Claude or another coding AI
-
-Give the AI the request, then ask it to:
-
-1. Read this README, the [AI playbook](docs/REPLIT_AGENT_PLAYBOOK.md),
-   [`replit.md`](replit.md), and [`docs/specs/README.md`](docs/specs/README.md).
-2. Read only the product specs and reusable skills relevant to the request.
-3. Inspect the current code and existing work before assuming the docs are current.
-4. Separate verified repository facts from platform facts and recommendations.
-5. Propose a scoped plan, risks, approval gates, and verification before editing.
-6. Stop for human confirmation before credentials, external writes, publishing,
-   promotion, destructive work, or a change in product intent.
-
-A useful opening prompt is:
-
-> Read `README.md`, `docs/REPLIT_AGENT_PLAYBOOK.md`, `replit.md`, and
-> `docs/specs/README.md`. Then inspect the files and only the skills relevant to
-> my request. Report what is verified, identify any ambiguity or existing
-> overlapping work, and propose a plan and checks before making changes.
+---
 
 ## Product specification map
 
@@ -149,11 +104,33 @@ Read and update the chain from intent to verification:
 | [Upload guide](artifacts/word-smash/UPLOAD.md) | How are packages prepared and sent to the CMS? | Operator sequence, prerequisites, dry run, and human-controlled boundaries |
 | [Content pipeline](docs/CONTENT_PIPELINE.md) | How does sheet content become a release? | Source sheet, generated files, build/preview/upload commands |
 
-When intent changes, review downstream documents in the table order. When an
+When intent changes, review downstream documents in table order. When an
 implementation detail changes without altering intent, begin at the earliest
 affected document and reconcile all downstream references.
 
-## Who owns what
+---
+
+## Working here with Claude or another coding AI
+
+Give the AI the request, then ask it to:
+
+1. Read this README, the [AI playbook](docs/REPLIT_AGENT_PLAYBOOK.md),
+   [`replit.md`](replit.md), and [`docs/specs/README.md`](docs/specs/README.md).
+2. Read only the product specs and reusable skills relevant to the request.
+3. Inspect the current code and existing work before assuming the docs are current.
+4. Separate verified repository facts from platform facts and recommendations.
+5. Propose a scoped plan, risks, approval gates, and verification before editing.
+6. Stop for human confirmation before credentials, external writes, publishing,
+   promotion, destructive work, or a change in product intent.
+
+A useful opening prompt:
+
+> Read `README.md`, `docs/REPLIT_AGENT_PLAYBOOK.md`, `replit.md`, and
+> `docs/specs/README.md`. Then inspect the files and only the skills relevant to
+> my request. Report what is verified, identify any ambiguity or existing
+> overlapping work, and propose a plan and checks before making changes.
+
+### Who owns what
 
 | Stage | AI owns | Human owns | Shared checkpoint |
 |---|---|---|---|
@@ -169,22 +146,15 @@ accounts, publish externally, or claim subjective acceptance. Humans should not
 need to perform routine repository investigation or run checks the AI can run
 safely. Both parties should pause when scope, evidence, or approval changes.
 
-## Repository guide
+---
 
-- `artifacts/word-smash/` — game source, language/audio assets, tests, packaging,
-  architecture decisions, and upload documentation.
-- `artifacts/api-server/` — supporting API service.
-- `artifacts/mockup-sandbox/` — design/component canvas.
-- `lib/` — shared workspace libraries.
-- `scripts/` — repository automation, including the CMS upload client.
-- `docs/specs/` — living Word Smash specification chain.
-- `docs/CONTENT_PIPELINE.md` — sheet → JSON → ZIPs → CMS, and the commands for it.
-- `docs/ONBOARDING.md` — new-developer start: desktop app, VS Code, or CLI.
-- `docs/SETUP.md` — first-time setup on a developer machine.
-- `.local/skills/` — Replit Agent's on-demand operating instructions. These are
-  useful source material but do not become available automatically to other AIs.
-- `.replit-artifact/artifact.toml` inside each artifact — checked-in artifact
-  metadata; use the owning platform's supported artifact tools when changing it.
+## Non-negotiables
 
-The repository enforces pnpm and a one-day minimum package release age. Do not
-disable that supply-chain safeguard to make an installation convenient.
+- **pnpm only.** A `preinstall` guard rejects npm and yarn.
+- **The one-day minimum package release age stays on.** Do not disable that
+  supply-chain safeguard to make an installation convenient.
+- **The game must work offline.** No `fetch()`, no `<audio>`, no CDN tags; the
+  build fails the release if it finds a forbidden pattern.
+- **Live uploads and publishing are human decisions.** `pnpm game:upload` dry-runs
+  by default; a real upload needs credentials and a typed confirmation, and lands
+  only in the CMS development channel.

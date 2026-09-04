@@ -1,0 +1,7 @@
+{
+  "_comment": "Source of truth for Word Smash level content. `sheetId` is the Google Sheet named 'Word Smash levels'; each language has one tab. Add a language by adding its tab to the sheet and an entry here. See docs/CONTENT_PIPELINE.md.",
+  "sheetId": "1X_A1EnF4ySLp508donSBBKuL-mDYG4Ojlv7ItcWCXfo",
+  "languages": {
+    "english": { "tab": "English" }
+  }
+}

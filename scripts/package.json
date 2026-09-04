@@ -6,6 +6,7 @@
   "scripts": {
     "hello": "tsx ./src/hello.ts",
     "upload:wordsmash": "tsx ./src/upload-wordsmash.ts",
+    "upload:all": "tsx ./src/upload-all.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {

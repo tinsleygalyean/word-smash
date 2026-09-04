@@ -1,0 +1,45 @@
+# Normalize all text files to LF in the repo and in the working tree.
+# Windows checkouts must not get CRLF: the release bundle and its
+# check-bundle.mjs contract are byte-sensitive, and the shell scripts
+# under scripts/ are run by POSIX shells.
+* text=auto eol=lf
+
+# Explicit text types (belt and braces if a file is misdetected).
+*.ts     text eol=lf
+*.tsx    text eol=lf
+*.js     text eol=lf
+*.mjs    text eol=lf
+*.cjs    text eol=lf
+*.json   text eol=lf
+*.md     text eol=lf
+*.css    text eol=lf
+*.html   text eol=lf
+*.svg    text eol=lf
+*.yaml   text eol=lf
+*.yml    text eol=lf
+*.toml   text eol=lf
+*.txt    text eol=lf
+*.sh     text eol=lf
+.gitignore      text eol=lf
+.gitattributes  text eol=lf
+.npmrc          text eol=lf
+.replit         text eol=lf
+.replitignore   text eol=lf
+.env.example    text eol=lf
+
+# Binary: never touch these.
+*.mp3    binary
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.ico    binary
+*.woff   binary
+*.woff2  binary
+*.ttf    binary
+*.otf    binary
+*.zip    binary
+*.pdf    binary
+
+# Lockfile: LF, and keep it out of diffs.
+pnpm-lock.yaml text eol=lf -diff linguist-generated

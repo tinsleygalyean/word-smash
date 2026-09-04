@@ -6,16 +6,6 @@
       "ghost": true,
       "words": [
         {
-          "id": "up",
-          "display": "up",
-          "units": ["u", "p"],
-          "audio": {
-            "slow": "audios/up_slow.mp3",
-            "natural": "audios/up_natural.mp3",
-            "units": ["audios/up_u.mp3", "audios/up_p.mp3"]
-          }
-        },
-        {
           "id": "in",
           "display": "in",
           "units": ["i", "n"],
@@ -23,6 +13,16 @@
             "slow": "audios/in_slow.mp3",
             "natural": "audios/in_natural.mp3",
             "units": ["audios/in_i.mp3", "audios/in_n.mp3"]
+          }
+        },
+        {
+          "id": "up",
+          "display": "up",
+          "units": ["u", "p"],
+          "audio": {
+            "slow": "audios/up_slow.mp3",
+            "natural": "audios/up_natural.mp3",
+            "units": ["audios/up_u.mp3", "audios/up_p.mp3"]
           }
         },
         {

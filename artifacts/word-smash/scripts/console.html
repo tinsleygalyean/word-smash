@@ -149,6 +149,9 @@
   .ghost-btn:hover{border-color:var(--honey-lo);color:var(--ink)}
   .ghost-btn.danger{color:#e89680;border-color:rgba(201,85,62,.42)}
   .ghost-btn.danger:hover{background:var(--terracotta);border-color:var(--terracotta);color:var(--paper)}
+  /* Armed: one more click stops the server. Reads as committed, not hovered. */
+  .ghost-btn.danger[data-armed]{background:var(--terracotta);border-color:var(--terracotta);color:var(--paper)}
+  .ghost-btn.danger:disabled{opacity:.6;cursor:default}
 
   /* Whole page dims once the server is gone — nothing on it works any more. */
   body.dead{opacity:.5;pointer-events:none}
@@ -263,6 +266,18 @@
 </div>
 
 <script>
+// ── Writing UI here? Read this first ────────────────────────────────────────
+// Do NOT use confirm(), alert(), or prompt(). Embedded browser panes — the
+// Claude Code desktop Browser pane among them — suppress modal dialogs, and a
+// suppressed confirm() RETURNS FALSE rather than throwing. Code shaped like
+//     if (!confirm('sure?')) return;
+// then silently does nothing, with no error anywhere, and it works fine in a
+// normal browser tab, so it survives testing. This is exactly how the "Kill
+// console server" button shipped broken.
+// For a destructive action, arm it in-page instead: first click changes the
+// label and colour, second click commits, and it disarms on a timeout, on
+// Escape, or on a click elsewhere. See the kill handler at the bottom.
+// ────────────────────────────────────────────────────────────────────────────
 const COMMANDS = [
   { id:'content', name:'pnpm content:build', desc:'Pull the Google Sheet → language JSON, validated.' },
   { id:'build',   name:'pnpm game:build',    desc:'Content + offline bundle + engine and language ZIPs.' },
@@ -398,11 +413,32 @@ $('#copylive').addEventListener('click', async () => {
 });
 
 // ── kill the server ─────────────────────────────────────────────────────────
-$('#kill').addEventListener('click', async () => {
-  const warning = running
-    ? 'A command is still running. Stop the console server anyway?'
-    : 'Stop the console server? This page will stop working.';
-  if (!confirm(warning)) return;
+// Two-step arm rather than confirm(): embedded browser panes (the Claude Code
+// desktop Browser pane among them) suppress modal dialogs, and a suppressed
+// confirm() returns false — which silently swallowed every click.
+const killBtn = $('#kill');
+const KILL_LABEL = killBtn.textContent;
+let armed = null; // timeout id while the button is armed
+
+function disarmKill() {
+  clearTimeout(armed);
+  armed = null;
+  killBtn.textContent = KILL_LABEL;
+  killBtn.removeAttribute('data-armed');
+}
+
+killBtn.addEventListener('click', async () => {
+  if (armed === null) {
+    killBtn.textContent = running ? 'Command running — click again to stop' : 'Click again to stop';
+    killBtn.dataset.armed = 'true';
+    armed = setTimeout(disarmKill, 5000);
+    return;
+  }
+
+  clearTimeout(armed);
+  armed = null;
+  killBtn.textContent = 'Stopping…';
+  killBtn.disabled = true;
 
   append('$ stopping console server', 'cmdline');
   // The server exits while replying, so a dropped connection here is success,
@@ -410,6 +446,14 @@ $('#kill').addEventListener('click', async () => {
   try { await fetch('/api/kill', { method: 'POST' }); } catch {}
   events.close();
   document.body.classList.add('dead');
+});
+
+// Clicking elsewhere, or pressing Escape, cancels an armed kill.
+document.addEventListener('click', (e) => {
+  if (armed !== null && e.target !== killBtn) disarmKill();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && armed !== null) disarmKill();
 });
 
 refreshState();

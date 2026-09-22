@@ -1,5 +1,31 @@
 # Word Smash — Architecture Decisions
 
+## English audio refresh (September 2026) — shared unit clips
+
+- New English recordings from the content team replace the ElevenLabs set. They
+  arrived in a Drive folder with flat names — `<word>.mp3` for whole words and
+  `<unit>.mp3` for phonemes/syllables — 63 source clips in all.
+- **Unit clips are shared per unit, not per word.** `unitAudioNames()` is gone;
+  `wordAudio()` in `scripts/build-content.mjs` derives `audios/<unit>.mp3` for
+  every unit. The content team's call: each unit in the pack makes the same sound
+  in every word that uses it, so one recording per unit is correct and the
+  per-word duplicates (`cat_c`, `clap_c`, `cactus_c1`, `cactus_c2`, `pencil_c`)
+  were redundant. A unit that repeats inside a word references the same clip
+  twice. This supersedes the M3 note below about spelling vowels per word
+  context.
+- **Slow clips are copies of the natural clips for now.** Slowed takes will be
+  recorded later; the two files stay separate so that swap is a drop-in with no
+  schema or code change.
+- The pack is now **87 files** (24 words × slow + natural = 48, plus 39 unit
+  clips: 27 phonemes and 12 syllables), down from 144.
+- All clips were normalised at import to mono, 44.1 kHz, 64 kbps MP3 with
+  metadata stripped — the delivered word clips carried tens of KB of ID3 padding
+  each, and four unit clips were 48 kHz. `oo` arrived as `oo.wav` but held MP3
+  data; it was re-encoded to `oo.mp3` like everything else.
+- The import was a one-off (`curl` from Drive, `ffmpeg`, copy). No script was
+  kept: `pnpm content:build` already reports exactly which files a drop must
+  contain, which is the checklist for the next delivery.
+
 ## Container packaging + cr_event compliance (July 2026)
 
 Prepared Word Smash for upload to the Curious Reader container per the

@@ -253,7 +253,7 @@ describe('hint modes (TC-UI-04)', () => {
     expect(outlines.length).toBe(0);
     vi.mocked(audio.playUnit).mockClear();
     fireEvent.pointerDown(buttons[0]);
-    expect(audio.playUnit).toHaveBeenCalledWith('audios/up_u.mp3', 'u');
+    expect(audio.playUnit).toHaveBeenCalledWith('audios/u.mp3', 'u');
   });
 });
 

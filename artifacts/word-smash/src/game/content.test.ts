@@ -33,10 +33,10 @@ describe('level structure (TC-CNT-02)', () => {
     }
   });
 
-  it('has the shipped totals: 24 distinct words, 144 MP3 references', () => {
+  it('has the shipped totals: 24 distinct words, 87 MP3 references (48 whole-word + 39 shared unit clips)', () => {
     expect(new Set(allWords.map((w) => w.id)).size).toBe(24);
     const refs = new Set(allWords.flatMap((w) => [w.audio.slow, w.audio.natural, ...w.audio.units]));
-    expect(refs.size).toBe(144);
+    expect(refs.size).toBe(87);
   });
 });
 

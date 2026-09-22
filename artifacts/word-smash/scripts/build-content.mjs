@@ -10,7 +10,7 @@
 //
 // Every audio path is DERIVED from the word and its units, never read from the
 // sheet, so the sheet stays a content document and the naming convention lives
-// in exactly one place (see `unitAudioNames`).
+// in exactly one place (see `wordAudio`).
 //
 // Usage:
 //   node scripts/build-content.mjs [--lang <code>|--all] [--check] [--from-csv <file>]
@@ -112,21 +112,18 @@ async function fetchTabCsv(sheetId, tab) {
 }
 
 // ── content model ────────────────────────────────────────────────────────────
-// Audio filenames for one word's units. Units repeat inside a word ("cactus" →
-// c,a,c,t,u,s), and each occurrence needs its own recording, so a unit that
-// appears more than once gets a 1-based occurrence suffix: c1 … c2. A unit that
-// appears once is left bare. This must match the recorded files in
-// public/lang/<code>/audios/ exactly.
-function unitAudioNames(id, units) {
-  const totals = new Map();
-  for (const u of units) totals.set(u, (totals.get(u) ?? 0) + 1);
-  const seen = new Map();
-  return units.map((u) => {
-    if (totals.get(u) === 1) return `audios/${id}_${u}.mp3`;
-    const n = (seen.get(u) ?? 0) + 1;
-    seen.set(u, n);
-    return `audios/${id}_${u}${n}.mp3`;
-  });
+// Audio filenames for one word. Whole-word clips are per word; unit clips are
+// SHARED across every word that uses the unit — `audios/a.mp3` serves cat, hat,
+// flag, baby … — because the recorded phoneme/syllable sounds are the same in
+// every word of the pack (decided 2026-09, see DECISIONS.md). A unit that repeats
+// inside a word ("cactus" → c,a,c,t,u,s) simply references the same clip twice.
+// This must match the recorded files in public/lang/<code>/audios/ exactly.
+function wordAudio(id, units) {
+  return {
+    slow: `audios/${id}_slow.mp3`,
+    natural: `audios/${id}_natural.mp3`,
+    units: units.map((u) => `audios/${u}.mp3`),
+  };
 }
 
 // Turn the sheet rows into the level structure, collecting every problem rather
@@ -181,11 +178,7 @@ function buildPack(langCode, rows, errors, warnings) {
       id,
       display: id,
       units,
-      audio: {
-        slow: `audios/${id}_slow.mp3`,
-        natural: `audios/${id}_natural.mp3`,
-        units: unitAudioNames(id, units),
-      },
+      audio: wordAudio(id, units),
     });
     byLevel.set(lvl, entry);
   });

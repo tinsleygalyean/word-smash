@@ -43,7 +43,7 @@
   words each; one word with a digraph unit, one CVC) for fast, deterministic
   engine/UI tests. Mirrors the real schema (DEVSPEC §I.1.1).
 - **F-PACK-EN** — the shipped English pack (`public/lang/english/wordsmash.json`):
-  10 levels × 6 words, 24 distinct words, 144 MP3s. Used for content/coverage and
+  10 levels × 6 words, 24 distinct words, 87 MP3s (48 whole-word + 39 shared unit clips). Used for content/coverage and
   packaging checks.
 - **F-SAVE-CURRENT** — a `Progress` blob in the current schema (DEVSPEC §I.1.2).
 - **F-SAVE-LEGACY** — a legacy save with **multiple plaques per `wordId`** and
@@ -172,7 +172,7 @@ Each case: **ID · what it verifies · method · trace**. Method tags: `AUTO-EXI
   `opengraph.jpg`, or `robots.txt`. `AUTO-EXISTS` (built-in assertion). Trace: I.7.
 - **TC-PKG-02** Language ZIP contains **only** `lang/<code>/…` and includes
   `wordsmash.json`. `AUTO-EXISTS`. Trace: I.7.
-- **TC-PKG-03** Language ZIP MP3 count **equals** the source `audios/` count (144
+- **TC-PKG-03** Language ZIP MP3 count **equals** the source `audios/` count (87
   for English). `AUTO-EXISTS`. Trace: I.7, I.1.1.
 - **TC-PKG-04** The two ZIPs merge into one tree with no overwrite (engine at root,
   language under `lang/<code>/`). `AUTO-TARGET` (unzip both, assert disjoint).

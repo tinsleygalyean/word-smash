@@ -64,7 +64,7 @@ The authoritative content file. Shape (see `src/game/types.ts`):
           "audio": {
             "slow":    "audios/sea_slow.mp3",     // whole word, slowed
             "natural": "audios/sea_natural.mp3",  // whole word, natural pace
-            "units":   ["audios/sea_s.mp3", "audios/sea_ea.mp3"] // per-unit, in order
+            "units":   ["audios/s.mp3", "audios/ea.mp3"]  // per-unit, in order; shared clips
           }
         }
       ]
@@ -86,12 +86,19 @@ Rules:
 - Audio paths are stored **relative to the pack dir** (`audios/…`) and are
   rewritten to `./lang/<code>/audios/…` at load time so the XHR loader resolves
   them in both dev and the offline bundle.
-- **Sounds, never letter names.** Every unit clip speaks the sound the unit makes
-  *in that word* (context-dependent: `a`→"ay" in *baby*, `a`→"ah" in *cat*). This
-  is a hard content rule enforced at audio-generation time.
+- **Sounds, never letter names.** Every unit clip speaks the sound the unit makes,
+  never the letter's name. This is a hard content rule enforced at recording time.
+- **Unit clips are shared.** `audios/<unit>.mp3` is one recording per unit,
+  referenced by every word that contains it (`audios/a.mp3` serves *cat*, *hat*,
+  *flag*, *baby*); a unit that repeats inside a word references the same clip
+  twice. Whole-word clips stay per word (`audios/<word>_slow.mp3`,
+  `audios/<word>_natural.mp3`). The content team's position (2026-09) is that each
+  unit in the pack makes the same sound in every word that uses it, so one
+  recording per unit is correct. The slow clip is currently a copy of the natural
+  clip; slowed takes will replace it later without a schema change.
 
 The current English pack: **10 levels × 6 words**, **24 distinct words**, backed
-by **144 MP3 files**.
+by **87 MP3 files** (48 whole-word + 39 shared unit clips).
 
 ### I.1.2 `localStorage` schema
 
@@ -365,7 +372,7 @@ artifacts/word-smash/                        versioned  — the game
   src/game/        types|audio|storage|events|physics|design|coords|fonts  versioned
   src/components/  React game components (GameScene, Hammer, Wall, …)       versioned
   public/lang/<code>/wordsmash.json          versioned  — authoritative content
-  public/lang/<code>/audios/*.mp3            versioned  — recorded speech (144 en)
+  public/lang/<code>/audios/*.mp3            versioned  — recorded speech (87 en)
   public/fonts/fredoka-600.woff2             versioned  — bundled game font
   upload/wordsmash-icon-512.png              versioned  — tile icon (uploaded, never zipped)
   vite.config.ts / vite.standalone.config.ts versioned  — dev / offline builds
@@ -437,6 +444,8 @@ pnpm --filter @workspace/scripts run upload:wordsmash -- --lang english
 - **M3:** 144 recorded MP3s (word slow/natural + per-unit), generated so a letter
   name can never be spoken; recorded audio is the default; `resolveAudioPaths()`
   fixes relative resolution in dev and the bundle.
+- **2026-09 English audio refresh:** new recordings from the content team replace
+  the ElevenLabs set; unit clips become one shared file per unit (87 files total).
 
 ---
 
@@ -469,6 +478,10 @@ pnpm --filter @workspace/scripts run upload:wordsmash -- --lang english
   TTS fallback map. Saying names would teach the wrong skill.
 - **2026-07 — Recorded MP3s are the default; TTS is a safety net only** (M3). The
   audio engine already preferred files and fell back only on miss/decode-fail.
+- **2026-09 — Unit clips are shared per unit, not per word.** The content team
+  judged every unit's sound identical across the words that use it, so one
+  `audios/<unit>.mp3` replaces the per-word `<word>_<unit>` duplicates. Slow word
+  clips are copies of the natural clips until slowed takes are recorded.
 - **2026-07 — `resolveAudioPaths()` prefixes pack-relative paths at load.** Without
   it the XHR hit the SPA fallback (index.html, 200) → decode fail → silent TTS.
 - **2026-07 — Ship the `cr_event` bridge in the standalone build.** It makes no

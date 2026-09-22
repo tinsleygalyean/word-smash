@@ -39,7 +39,7 @@ describe('outside the container (TC-EVT-01)', () => {
     expect(() => {
       emitSessionStart(1);
       emitWordCompleted({ level: 1, wordId: 'up', ghost: true, replay: false, score: 2, maxScore: 2, durationSeconds: 3, errors: 0, hintsUsed: 0, smashCount: 1 });
-      emitSummary({ levelsPlayed: 1, wordsCompleted: 1, totalTimePlayed: 3, lastLevelNumber: 1 });
+      emitSummary({ wordsCompleted: 1, totalTimePlayed: 3, lastLevelNumber: 1 });
     }).not.toThrow();
   });
 
@@ -77,12 +77,13 @@ describe('envelope construction (TC-EVT-02)', () => {
     const posted = installBridge();
     emitWordCompleted({ level: 2, wordId: 'cat', ghost: false, replay: true, score: 3, maxScore: 3, durationSeconds: 8, errors: 1, hintsUsed: 2, smashCount: 2 });
     emitLevelCompleted({ level: 2, ghost: false, durationSeconds: 60 });
-    emitSummary({ levelsPlayed: 2, wordsCompleted: 12, totalTimePlayed: 60, lastLevelNumber: 2 });
+    emitSummary({ wordsCompleted: 6, totalTimePlayed: 60, lastLevelNumber: 2 });
     const [word, level, summary] = envelopes(posted);
     expect('options' in word).toBe(false);
     expect('options' in level).toBe(false);
     expect(summary.collection).toBe('summary_data');
     expect(summary.options).toEqual({
+      lang: 'replace',
       levels_played: 'add',
       words_completed: 'add',
       total_time_played: 'add',
@@ -100,6 +101,75 @@ describe('envelope construction (TC-EVT-02)', () => {
       score: 4, max_score: 4, duration_seconds: 12.5,
       errors: 1, hints_used: 0, smash_count: 3,
     });
+  });
+});
+
+describe('language is always reported (TC-EVT-05)', () => {
+  it('every payload of every collection carries the launch language', () => {
+    const posted = installBridge();
+    initEvents('kid-7', 'swahili');
+    emitSessionStart(1);
+    emitWordCompleted({ level: 1, wordId: 'cat', ghost: true, replay: false, score: 3, maxScore: 3, durationSeconds: 5, errors: 0, hintsUsed: 0, smashCount: 1 });
+    emitLevelCompleted({ level: 1, ghost: true, durationSeconds: 30 });
+    emitSummary({ wordsCompleted: 6, totalTimePlayed: 30, lastLevelNumber: 1 });
+
+    const envs = envelopes(posted);
+    expect(envs).toHaveLength(4);
+    // Including summary_data — a device with two packs installed must produce
+    // data that can be told apart by language.
+    for (const env of envs) {
+      expect(env.data.lang).toBe('swahili');
+    }
+    expect(envs.map((e) => e.collection)).toEqual([
+      'user_sessions_data', 'user_sessions_data', 'user_sessions_data', 'summary_data',
+    ]);
+  });
+});
+
+describe('summary_data merge deltas (TC-EVT-06)', () => {
+  it('levels_played is 1 per level completion, never the level number', () => {
+    const posted = installBridge();
+    initEvents('kid-7', 'english');
+    // Finish levels 5, 6 and 7 in one session.
+    for (const level of [5, 6, 7]) {
+      emitSummary({ wordsCompleted: 6, totalTimePlayed: 40, lastLevelNumber: level });
+    }
+    const envs = envelopes(posted);
+    expect(envs.map((e) => e.data.levels_played)).toEqual([1, 1, 1]);
+    // What the container would hold after merging: 3 levels, not 5+6+7=18.
+    const lifetimeLevels = envs.reduce((n, e) => n + (e.data.levels_played as number), 0);
+    expect(lifetimeLevels).toBe(3);
+    // `replace` field tracks the latest level, not a sum.
+    expect(envs.at(-1)!.data.last_level_number).toBe(7);
+  });
+
+  it('words_completed is the per-level delta, so lifetime totals stay linear', () => {
+    const posted = installBridge();
+    initEvents('kid-7', 'english');
+    for (const level of [1, 2, 3]) {
+      emitSummary({ wordsCompleted: 6, totalTimePlayed: 40, lastLevelNumber: level });
+    }
+    const lifetimeWords = envelopes(posted).reduce((n, e) => n + (e.data.words_completed as number), 0);
+    // 3 levels x 6 words. The old bug re-sent the lifetime map each time (6+12+18=36).
+    expect(lifetimeWords).toBe(18);
+  });
+});
+
+describe('64 KB message cap (TC-EVT-07)', () => {
+  it('drops an oversize payload instead of posting one the container rejects', () => {
+    const posted = installBridge();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    emitSessionStart(1);
+    expect(posted).toHaveLength(1); // a normal payload still posts
+
+    // A pathological `data` — the spec lets games add fields freely (§6.2).
+    emitWordCompleted({
+      level: 1, wordId: 'x'.repeat(80_000), ghost: false, replay: false,
+      score: 1, maxScore: 1, durationSeconds: 1, errors: 0, hintsUsed: 0, smashCount: 1,
+    });
+    expect(posted).toHaveLength(1); // nothing new posted
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
   });
 });
 

@@ -155,6 +155,16 @@ Each case: **ID · what it verifies · method · trace**. Method tags: `AUTO-EXI
   options. `AUTO-TARGET` + `MANUAL`. Trace: I.6, UISPEC §9.
 - **TC-EVT-04** `cr_user_id` comes from the launch URL and is `""` when absent.
   `AUTO-TARGET`. Trace: I.6.
+- **TC-EVT-05** **Every** payload of **both** collections carries `data.lang` from
+  the launch language — `summary_data` included, so two language packs on one
+  device stay distinguishable. `AUTO-TARGET`. Trace: I.6.
+- **TC-EVT-07** A payload that would exceed the 64 KB message cap (§6.1) is
+  dropped locally with a warning rather than posted, since an oversize envelope
+  is rejected whole and silently by the container. `AUTO-TARGET`. Trace: I.6.
+- **TC-EVT-06** `summary_data` `add` fields carry per-level **deltas**:
+  `levels_played` is `1` per completion (never the level number) and
+  `words_completed` counts only that level's words, so merged lifetime totals
+  grow linearly rather than as `1+2+3+…`. `AUTO-TARGET`. Trace: I.6.
 
 ### 4.6 Packaging pipeline (DEVSPEC §I.7)
 
@@ -244,12 +254,12 @@ A build is releasable when:
 |---|---|
 | I.1.1 Language pack schema & rules | TC-CNT-01/02/03, TC-PKG-03 |
 | I.1.2 localStorage schema | TC-STO-01..07 |
-| I.1.3 cr_event contract | TC-EVT-01..04 |
+| I.1.3 cr_event contract | TC-EVT-01..07 |
 | I.2 Engine / reducer | TC-ENG-01..05, TC-UI-01/02/05/10 |
 | I.3 Audio system | TC-AUD-01..06 |
 | I.4 Physics / scatter | TC-PHY-01..04 |
 | I.5 Storage / persistence | TC-STO-01..07, TC-UI-06/07/09 |
-| I.6 Event bridge | TC-EVT-01..04, TC-EVT-03 |
+| I.6 Event bridge | TC-EVT-01..07 |
 | I.7 Packaging pipeline | TC-PKG-01..06, TC-CNT-01 |
 | II.1 Offline `file://` constraints | TC-NFR-01/02, TC-PKG-05, TC-AUD-02 |
 | II.2 Performance / device | TC-NFR-03 |

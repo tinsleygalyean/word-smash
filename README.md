@@ -106,6 +106,7 @@ Read and update the chain from intent to verification:
 | [Architecture decisions](artifacts/word-smash/DECISIONS.md) | Why were important implementation constraints chosen? | Deeper rationale and Curious Reader compatibility decisions |
 | [Upload guide](artifacts/word-smash/UPLOAD.md) | How are packages prepared and sent to the CMS? | Operator sequence, prerequisites, dry run, and human-controlled boundaries |
 | [Content pipeline](docs/CONTENT_PIPELINE.md) | How does sheet content become a release? | Source sheet, generated files, build/preview/upload commands |
+| [Container spec feedback](docs/CONTAINER_SPEC_FEEDBACK.md) | What have we asked the container team to clarify? | Open requests against the `cr_event` contract (§6) |
 
 When intent changes, review downstream documents in table order. When an
 implementation detail changes without altering intent, begin at the earliest

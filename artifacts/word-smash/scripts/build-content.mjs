@@ -22,7 +22,7 @@
 //   --check         validate and diff only; write nothing, non-zero exit on drift
 //   --from-csv <f>  read a saved CSV export instead of fetching the sheet
 //                   (offline/no-network path; see docs/CONTENT_PIPELINE.md)
-//   --snapshot      also write the fetched CSV to public/lang/<code>/source.csv
+//   --snapshot      also write the fetched sheet CSV to dist/content/
 //
 // Network: this script fetches over HTTPS at BUILD time. That is unrelated to
 // the game's offline rule — nothing here ships into the bundle.
@@ -34,6 +34,10 @@ import { fileURLToPath } from "node:url";
 const ARTIFACT_DIR = path.resolve(fileURLToPath(import.meta.url), "..", "..");
 const CONFIG_PATH = path.join(ARTIFACT_DIR, "content.config.json");
 const LANG_ROOT = path.join(ARTIFACT_DIR, "public", "lang");
+// Anything written under public/ is copied into the build by Vite and then
+// swept into the language ZIP by `zip -r lang/<code>` — i.e. shipped to a
+// child's device. Working files that are not game assets go here instead.
+const WORK_DIR = path.join(ARTIFACT_DIR, "dist", "content");
 
 // ── args ─────────────────────────────────────────────────────────────────────
 function parseArgs(argv) {
@@ -352,7 +356,10 @@ async function buildLang(langCode, tab, config, args) {
   console.log(`  wrote:  ${path.relative(ARTIFACT_DIR, outFile)}${changed ? " (changed)" : " (no change)"}`);
 
   if (args.snapshot) {
-    const snap = path.join(outDir, "source.csv");
+    // dist/content/, never public/ — a CSV under public/ would ship to devices
+    // inside the language ZIP. See WORK_DIR.
+    fs.mkdirSync(WORK_DIR, { recursive: true });
+    const snap = path.join(WORK_DIR, `${langCode}-source.csv`);
     fs.writeFileSync(snap, csv);
     console.log(`  wrote:  ${path.relative(ARTIFACT_DIR, snap)}`);
   }

@@ -148,8 +148,16 @@ merge directives; omitted entirely for `user_sessions_data`).
 - `word_completed` → `{ level, word_id, ghost, replay, score, max_score, duration_seconds, errors, hints_used, smash_count }`
 - `level_completed` → `{ level, ghost, duration_seconds }`
 
-`summary_data` event (rolled-up, with merge `options`):
-- `{ levels_played (add), words_completed (add), total_time_played (add), last_level_number (replace) }`
+`summary_data` event — **one call per level completion** (rolled-up, with merge
+`options`). Every `add` field carries the **delta for that level**, never a
+running total and never a level number; the container increments the player's
+lifetime document by whatever is sent:
+- `{ lang (replace), levels_played (add, always 1), words_completed (add, words
+  finished in that level), total_time_played (add, seconds in that level),
+  last_level_number (replace) }`
+
+`lang` is stamped on **every** payload in both collections, so a device with two
+language packs installed produces data that can be told apart by language.
 
 Reporting is **fire-and-forget, exception-safe, performs no network I/O, and is a
 silent no-op** when `window.ReactNativeWebView?.postMessage` is absent (plain

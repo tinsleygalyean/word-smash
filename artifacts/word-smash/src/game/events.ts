@@ -9,8 +9,12 @@
 // Reporting is fire-and-forget, exception-safe, performs no network I/O, and is
 // a silent no-op outside the container (plain browser / dev).
 
+// The game slug — the same identifier as the packaging/upload engineSlug.
+// Stable across releases (spec §6.2); changing it orphans the warehouse data.
 const SUB_APP_ID = 'wordsmash';
 const PAYLOAD_VERSION = 1;
+// Hard cap on one bridge message (spec §6.1).
+const MAX_MESSAGE_BYTES = 64 * 1024;
 
 let userId = '';
 let langCode = 'english';
@@ -62,9 +66,18 @@ function post(
     if (collection === 'summary_data') {
       payload.options = options ?? {};
     }
-    window.ReactNativeWebView.postMessage(
-      JSON.stringify({ type: 'cr_event', payload }),
-    );
+    const json = JSON.stringify({ type: 'cr_event', payload });
+    // §6.1 caps a message at 64 KB and rejects an oversize one WHOLE — and
+    // because reporting is fire-and-forget the game gets no signal, so the
+    // event would vanish silently. Drop it here instead, where a developer can
+    // see why. `data` is open-ended (§6.2), so this is not hypothetical.
+    if (new TextEncoder().encode(json).length > MAX_MESSAGE_BYTES) {
+      console.warn(
+        `cr_event dropped: ${data.type ?? collection} exceeds the ${MAX_MESSAGE_BYTES}-byte cap`,
+      );
+      return;
+    }
+    window.ReactNativeWebView.postMessage(json);
   } catch {
     // never let reporting break gameplay
   }
@@ -126,21 +139,35 @@ export function emitLevelCompleted(params: {
   });
 }
 
+// summary_data: ONE call per level completion, merged into the player's lifetime
+// document by the container per the `options` ops below.
+//
+// `add` fields must carry the DELTA for this level, never a running total or a
+// level number — the container increments by whatever is sent. `levels_played`
+// is therefore hardcoded to 1 and deliberately not a parameter: passing
+// `level` there (which this once did) makes the lifetime count grow as
+// 1+2+3+… instead of 1 per level.
+//
+// `lang` is stamped on every payload so a device with two language packs
+// installed reports distinguishable data (spec §6.3 conventions).
 export function emitSummary(params: {
-  levelsPlayed: number;
+  /** Words completed in the level just finished — a delta, not a lifetime total. */
   wordsCompleted: number;
+  /** Seconds spent in the level just finished — a delta. */
   totalTimePlayed: number;
   lastLevelNumber: number;
 }): void {
   post(
     'summary_data',
     {
-      levels_played: params.levelsPlayed,
+      lang: langCode,
+      levels_played: 1,
       words_completed: params.wordsCompleted,
       total_time_played: params.totalTimePlayed,
       last_level_number: params.lastLevelNumber,
     },
     {
+      lang: 'replace',
       levels_played: 'add',
       words_completed: 'add',
       total_time_played: 'add',

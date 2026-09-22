@@ -647,7 +647,13 @@ export function GameScene({ langPack, lang }: Props) {
       clearWordQueue(lang, levelData.level);
       const levelDuration = (Date.now() - st.levelStartTime) / 1000;
       emitLevelCompleted({ level: levelData.level, ghost: levelData.ghost, durationSeconds: levelDuration });
-      emitSummary({ levelsPlayed: levelData.level, wordsCompleted: Object.keys(completions).length, totalTimePlayed: levelDuration, lastLevelNumber: levelData.level });
+      // summary_data `add` fields take the DELTA for this level only. `completions`
+      // is the lifetime map (restored from storage), so count just this level's
+      // words — sending its full size re-added every level total so far.
+      const wordsThisLevel = levelData.words.filter(
+        (w) => completions[`${w.id}_L${levelData.level}`],
+      ).length;
+      emitSummary({ wordsCompleted: wordsThisLevel, totalTimePlayed: levelDuration, lastLevelNumber: levelData.level });
       const nextLevel = levelData.level + 1;
       const nextData = getLevelData(nextLevel);
       const fromStage = hammerStageForLevel(levelData.level);

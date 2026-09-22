@@ -12,7 +12,7 @@
           "audio": {
             "slow": "audios/in_slow.mp3",
             "natural": "audios/in_natural.mp3",
-            "units": ["audios/in_i.mp3", "audios/in_n.mp3"]
+            "units": ["audios/i.mp3", "audios/n.mp3"]
           }
         },
         {
@@ -22,7 +22,7 @@
           "audio": {
             "slow": "audios/up_slow.mp3",
             "natural": "audios/up_natural.mp3",
-            "units": ["audios/up_u.mp3", "audios/up_p.mp3"]
+            "units": ["audios/u.mp3", "audios/p.mp3"]
           }
         },
         {
@@ -32,7 +32,7 @@
           "audio": {
             "slow": "audios/egg_slow.mp3",
             "natural": "audios/egg_natural.mp3",
-            "units": ["audios/egg_e.mp3", "audios/egg_gg.mp3"]
+            "units": ["audios/e.mp3", "audios/gg.mp3"]
           }
         },
         {
@@ -42,7 +42,7 @@
           "audio": {
             "slow": "audios/bee_slow.mp3",
             "natural": "audios/bee_natural.mp3",
-            "units": ["audios/bee_b.mp3", "audios/bee_ee.mp3"]
+            "units": ["audios/b.mp3", "audios/ee.mp3"]
           }
         },
         {
@@ -52,7 +52,7 @@
           "audio": {
             "slow": "audios/sea_slow.mp3",
             "natural": "audios/sea_natural.mp3",
-            "units": ["audios/sea_s.mp3", "audios/sea_ea.mp3"]
+            "units": ["audios/s.mp3", "audios/ea.mp3"]
           }
         },
         {
@@ -62,7 +62,7 @@
           "audio": {
             "slow": "audios/zoo_slow.mp3",
             "natural": "audios/zoo_natural.mp3",
-            "units": ["audios/zoo_z.mp3", "audios/zoo_oo.mp3"]
+            "units": ["audios/z.mp3", "audios/oo.mp3"]
           }
         }
       ]
@@ -78,7 +78,7 @@
           "audio": {
             "slow": "audios/up_slow.mp3",
             "natural": "audios/up_natural.mp3",
-            "units": ["audios/up_u.mp3", "audios/up_p.mp3"]
+            "units": ["audios/u.mp3", "audios/p.mp3"]
           }
         },
         {
@@ -88,7 +88,7 @@
           "audio": {
             "slow": "audios/in_slow.mp3",
             "natural": "audios/in_natural.mp3",
-            "units": ["audios/in_i.mp3", "audios/in_n.mp3"]
+            "units": ["audios/i.mp3", "audios/n.mp3"]
           }
         },
         {
@@ -98,7 +98,7 @@
           "audio": {
             "slow": "audios/egg_slow.mp3",
             "natural": "audios/egg_natural.mp3",
-            "units": ["audios/egg_e.mp3", "audios/egg_gg.mp3"]
+            "units": ["audios/e.mp3", "audios/gg.mp3"]
           }
         },
         {
@@ -108,7 +108,7 @@
           "audio": {
             "slow": "audios/bee_slow.mp3",
             "natural": "audios/bee_natural.mp3",
-            "units": ["audios/bee_b.mp3", "audios/bee_ee.mp3"]
+            "units": ["audios/b.mp3", "audios/ee.mp3"]
           }
         },
         {
@@ -118,7 +118,7 @@
           "audio": {
             "slow": "audios/sea_slow.mp3",
             "natural": "audios/sea_natural.mp3",
-            "units": ["audios/sea_s.mp3", "audios/sea_ea.mp3"]
+            "units": ["audios/s.mp3", "audios/ea.mp3"]
           }
         },
         {
@@ -128,7 +128,7 @@
           "audio": {
             "slow": "audios/zoo_slow.mp3",
             "natural": "audios/zoo_natural.mp3",
-            "units": ["audios/zoo_z.mp3", "audios/zoo_oo.mp3"]
+            "units": ["audios/z.mp3", "audios/oo.mp3"]
           }
         }
       ]
@@ -144,7 +144,7 @@
           "audio": {
             "slow": "audios/cat_slow.mp3",
             "natural": "audios/cat_natural.mp3",
-            "units": ["audios/cat_c.mp3", "audios/cat_a.mp3", "audios/cat_t.mp3"]
+            "units": ["audios/c.mp3", "audios/a.mp3", "audios/t.mp3"]
           }
         },
         {
@@ -154,7 +154,7 @@
           "audio": {
             "slow": "audios/ten_slow.mp3",
             "natural": "audios/ten_natural.mp3",
-            "units": ["audios/ten_t.mp3", "audios/ten_e.mp3", "audios/ten_n.mp3"]
+            "units": ["audios/t.mp3", "audios/e.mp3", "audios/n.mp3"]
           }
         },
         {
@@ -164,7 +164,7 @@
           "audio": {
             "slow": "audios/pig_slow.mp3",
             "natural": "audios/pig_natural.mp3",
-            "units": ["audios/pig_p.mp3", "audios/pig_i.mp3", "audios/pig_g.mp3"]
+            "units": ["audios/p.mp3", "audios/i.mp3", "audios/g.mp3"]
           }
         },
         {
@@ -174,7 +174,7 @@
           "audio": {
             "slow": "audios/sun_slow.mp3",
             "natural": "audios/sun_natural.mp3",
-            "units": ["audios/sun_s.mp3", "audios/sun_u.mp3", "audios/sun_n.mp3"]
+            "units": ["audios/s.mp3", "audios/u.mp3", "audios/n.mp3"]
           }
         },
         {
@@ -184,7 +184,7 @@
           "audio": {
             "slow": "audios/hat_slow.mp3",
             "natural": "audios/hat_natural.mp3",
-            "units": ["audios/hat_h.mp3", "audios/hat_a.mp3", "audios/hat_t.mp3"]
+            "units": ["audios/h.mp3", "audios/a.mp3", "audios/t.mp3"]
           }
         },
         {
@@ -194,7 +194,7 @@
           "audio": {
             "slow": "audios/top_slow.mp3",
             "natural": "audios/top_natural.mp3",
-            "units": ["audios/top_t.mp3", "audios/top_o.mp3", "audios/top_p.mp3"]
+            "units": ["audios/t.mp3", "audios/o.mp3", "audios/p.mp3"]
           }
         }
       ]
@@ -210,7 +210,7 @@
           "audio": {
             "slow": "audios/cat_slow.mp3",
             "natural": "audios/cat_natural.mp3",
-            "units": ["audios/cat_c.mp3", "audios/cat_a.mp3", "audios/cat_t.mp3"]
+            "units": ["audios/c.mp3", "audios/a.mp3", "audios/t.mp3"]
           }
         },
         {
@@ -220,7 +220,7 @@
           "audio": {
             "slow": "audios/ten_slow.mp3",
             "natural": "audios/ten_natural.mp3",
-            "units": ["audios/ten_t.mp3", "audios/ten_e.mp3", "audios/ten_n.mp3"]
+            "units": ["audios/t.mp3", "audios/e.mp3", "audios/n.mp3"]
           }
         },
         {
@@ -230,7 +230,7 @@
           "audio": {
             "slow": "audios/pig_slow.mp3",
             "natural": "audios/pig_natural.mp3",
-            "units": ["audios/pig_p.mp3", "audios/pig_i.mp3", "audios/pig_g.mp3"]
+            "units": ["audios/p.mp3", "audios/i.mp3", "audios/g.mp3"]
           }
         },
         {
@@ -240,7 +240,7 @@
           "audio": {
             "slow": "audios/sun_slow.mp3",
             "natural": "audios/sun_natural.mp3",
-            "units": ["audios/sun_s.mp3", "audios/sun_u.mp3", "audios/sun_n.mp3"]
+            "units": ["audios/s.mp3", "audios/u.mp3", "audios/n.mp3"]
           }
         },
         {
@@ -250,7 +250,7 @@
           "audio": {
             "slow": "audios/hat_slow.mp3",
             "natural": "audios/hat_natural.mp3",
-            "units": ["audios/hat_h.mp3", "audios/hat_a.mp3", "audios/hat_t.mp3"]
+            "units": ["audios/h.mp3", "audios/a.mp3", "audios/t.mp3"]
           }
         },
         {
@@ -260,7 +260,7 @@
           "audio": {
             "slow": "audios/top_slow.mp3",
             "natural": "audios/top_natural.mp3",
-            "units": ["audios/top_t.mp3", "audios/top_o.mp3", "audios/top_p.mp3"]
+            "units": ["audios/t.mp3", "audios/o.mp3", "audios/p.mp3"]
           }
         }
       ]
@@ -276,7 +276,7 @@
           "audio": {
             "slow": "audios/frog_slow.mp3",
             "natural": "audios/frog_natural.mp3",
-            "units": ["audios/frog_f.mp3", "audios/frog_r.mp3", "audios/frog_o.mp3", "audios/frog_g.mp3"]
+            "units": ["audios/f.mp3", "audios/r.mp3", "audios/o.mp3", "audios/g.mp3"]
           }
         },
         {
@@ -286,7 +286,7 @@
           "audio": {
             "slow": "audios/slip_slow.mp3",
             "natural": "audios/slip_natural.mp3",
-            "units": ["audios/slip_s.mp3", "audios/slip_l.mp3", "audios/slip_i.mp3", "audios/slip_p.mp3"]
+            "units": ["audios/s.mp3", "audios/l.mp3", "audios/i.mp3", "audios/p.mp3"]
           }
         },
         {
@@ -296,7 +296,7 @@
           "audio": {
             "slow": "audios/swim_slow.mp3",
             "natural": "audios/swim_natural.mp3",
-            "units": ["audios/swim_s.mp3", "audios/swim_w.mp3", "audios/swim_i.mp3", "audios/swim_m.mp3"]
+            "units": ["audios/s.mp3", "audios/w.mp3", "audios/i.mp3", "audios/m.mp3"]
           }
         },
         {
@@ -306,7 +306,7 @@
           "audio": {
             "slow": "audios/flag_slow.mp3",
             "natural": "audios/flag_natural.mp3",
-            "units": ["audios/flag_f.mp3", "audios/flag_l.mp3", "audios/flag_a.mp3", "audios/flag_g.mp3"]
+            "units": ["audios/f.mp3", "audios/l.mp3", "audios/a.mp3", "audios/g.mp3"]
           }
         },
         {
@@ -316,7 +316,7 @@
           "audio": {
             "slow": "audios/step_slow.mp3",
             "natural": "audios/step_natural.mp3",
-            "units": ["audios/step_s.mp3", "audios/step_t.mp3", "audios/step_e.mp3", "audios/step_p.mp3"]
+            "units": ["audios/s.mp3", "audios/t.mp3", "audios/e.mp3", "audios/p.mp3"]
           }
         },
         {
@@ -326,7 +326,7 @@
           "audio": {
             "slow": "audios/clap_slow.mp3",
             "natural": "audios/clap_natural.mp3",
-            "units": ["audios/clap_c.mp3", "audios/clap_l.mp3", "audios/clap_a.mp3", "audios/clap_p.mp3"]
+            "units": ["audios/c.mp3", "audios/l.mp3", "audios/a.mp3", "audios/p.mp3"]
           }
         }
       ]
@@ -342,7 +342,7 @@
           "audio": {
             "slow": "audios/frog_slow.mp3",
             "natural": "audios/frog_natural.mp3",
-            "units": ["audios/frog_f.mp3", "audios/frog_r.mp3", "audios/frog_o.mp3", "audios/frog_g.mp3"]
+            "units": ["audios/f.mp3", "audios/r.mp3", "audios/o.mp3", "audios/g.mp3"]
           }
         },
         {
@@ -352,7 +352,7 @@
           "audio": {
             "slow": "audios/slip_slow.mp3",
             "natural": "audios/slip_natural.mp3",
-            "units": ["audios/slip_s.mp3", "audios/slip_l.mp3", "audios/slip_i.mp3", "audios/slip_p.mp3"]
+            "units": ["audios/s.mp3", "audios/l.mp3", "audios/i.mp3", "audios/p.mp3"]
           }
         },
         {
@@ -362,7 +362,7 @@
           "audio": {
             "slow": "audios/swim_slow.mp3",
             "natural": "audios/swim_natural.mp3",
-            "units": ["audios/swim_s.mp3", "audios/swim_w.mp3", "audios/swim_i.mp3", "audios/swim_m.mp3"]
+            "units": ["audios/s.mp3", "audios/w.mp3", "audios/i.mp3", "audios/m.mp3"]
           }
         },
         {
@@ -372,7 +372,7 @@
           "audio": {
             "slow": "audios/flag_slow.mp3",
             "natural": "audios/flag_natural.mp3",
-            "units": ["audios/flag_f.mp3", "audios/flag_l.mp3", "audios/flag_a.mp3", "audios/flag_g.mp3"]
+            "units": ["audios/f.mp3", "audios/l.mp3", "audios/a.mp3", "audios/g.mp3"]
           }
         },
         {
@@ -382,7 +382,7 @@
           "audio": {
             "slow": "audios/step_slow.mp3",
             "natural": "audios/step_natural.mp3",
-            "units": ["audios/step_s.mp3", "audios/step_t.mp3", "audios/step_e.mp3", "audios/step_p.mp3"]
+            "units": ["audios/s.mp3", "audios/t.mp3", "audios/e.mp3", "audios/p.mp3"]
           }
         },
         {
@@ -392,7 +392,7 @@
           "audio": {
             "slow": "audios/clap_slow.mp3",
             "natural": "audios/clap_natural.mp3",
-            "units": ["audios/clap_c.mp3", "audios/clap_l.mp3", "audios/clap_a.mp3", "audios/clap_p.mp3"]
+            "units": ["audios/c.mp3", "audios/l.mp3", "audios/a.mp3", "audios/p.mp3"]
           }
         }
       ]
@@ -408,7 +408,7 @@
           "audio": {
             "slow": "audios/cactus_slow.mp3",
             "natural": "audios/cactus_natural.mp3",
-            "units": ["audios/cactus_cac.mp3", "audios/cactus_tus.mp3"]
+            "units": ["audios/cac.mp3", "audios/tus.mp3"]
           }
         },
         {
@@ -418,7 +418,7 @@
           "audio": {
             "slow": "audios/baby_slow.mp3",
             "natural": "audios/baby_natural.mp3",
-            "units": ["audios/baby_ba.mp3", "audios/baby_by.mp3"]
+            "units": ["audios/ba.mp3", "audios/by.mp3"]
           }
         },
         {
@@ -428,7 +428,7 @@
           "audio": {
             "slow": "audios/pencil_slow.mp3",
             "natural": "audios/pencil_natural.mp3",
-            "units": ["audios/pencil_pen.mp3", "audios/pencil_cil.mp3"]
+            "units": ["audios/pen.mp3", "audios/cil.mp3"]
           }
         },
         {
@@ -438,7 +438,7 @@
           "audio": {
             "slow": "audios/monkey_slow.mp3",
             "natural": "audios/monkey_natural.mp3",
-            "units": ["audios/monkey_mon.mp3", "audios/monkey_key.mp3"]
+            "units": ["audios/mon.mp3", "audios/key.mp3"]
           }
         },
         {
@@ -448,7 +448,7 @@
           "audio": {
             "slow": "audios/tiger_slow.mp3",
             "natural": "audios/tiger_natural.mp3",
-            "units": ["audios/tiger_ti.mp3", "audios/tiger_ger.mp3"]
+            "units": ["audios/ti.mp3", "audios/ger.mp3"]
           }
         },
         {
@@ -458,7 +458,7 @@
           "audio": {
             "slow": "audios/zebra_slow.mp3",
             "natural": "audios/zebra_natural.mp3",
-            "units": ["audios/zebra_ze.mp3", "audios/zebra_bra.mp3"]
+            "units": ["audios/ze.mp3", "audios/bra.mp3"]
           }
         }
       ]
@@ -474,7 +474,7 @@
           "audio": {
             "slow": "audios/cactus_slow.mp3",
             "natural": "audios/cactus_natural.mp3",
-            "units": ["audios/cactus_cac.mp3", "audios/cactus_tus.mp3"]
+            "units": ["audios/cac.mp3", "audios/tus.mp3"]
           }
         },
         {
@@ -484,7 +484,7 @@
           "audio": {
             "slow": "audios/baby_slow.mp3",
             "natural": "audios/baby_natural.mp3",
-            "units": ["audios/baby_ba.mp3", "audios/baby_by.mp3"]
+            "units": ["audios/ba.mp3", "audios/by.mp3"]
           }
         },
         {
@@ -494,7 +494,7 @@
           "audio": {
             "slow": "audios/pencil_slow.mp3",
             "natural": "audios/pencil_natural.mp3",
-            "units": ["audios/pencil_pen.mp3", "audios/pencil_cil.mp3"]
+            "units": ["audios/pen.mp3", "audios/cil.mp3"]
           }
         },
         {
@@ -504,7 +504,7 @@
           "audio": {
             "slow": "audios/monkey_slow.mp3",
             "natural": "audios/monkey_natural.mp3",
-            "units": ["audios/monkey_mon.mp3", "audios/monkey_key.mp3"]
+            "units": ["audios/mon.mp3", "audios/key.mp3"]
           }
         },
         {
@@ -514,7 +514,7 @@
           "audio": {
             "slow": "audios/tiger_slow.mp3",
             "natural": "audios/tiger_natural.mp3",
-            "units": ["audios/tiger_ti.mp3", "audios/tiger_ger.mp3"]
+            "units": ["audios/ti.mp3", "audios/ger.mp3"]
           }
         },
         {
@@ -524,7 +524,7 @@
           "audio": {
             "slow": "audios/zebra_slow.mp3",
             "natural": "audios/zebra_natural.mp3",
-            "units": ["audios/zebra_ze.mp3", "audios/zebra_bra.mp3"]
+            "units": ["audios/ze.mp3", "audios/bra.mp3"]
           }
         }
       ]
@@ -540,7 +540,7 @@
           "audio": {
             "slow": "audios/cactus_slow.mp3",
             "natural": "audios/cactus_natural.mp3",
-            "units": ["audios/cactus_c1.mp3", "audios/cactus_a.mp3", "audios/cactus_c2.mp3", "audios/cactus_t.mp3", "audios/cactus_u.mp3", "audios/cactus_s.mp3"]
+            "units": ["audios/c.mp3", "audios/a.mp3", "audios/c.mp3", "audios/t.mp3", "audios/u.mp3", "audios/s.mp3"]
           }
         },
         {
@@ -550,7 +550,7 @@
           "audio": {
             "slow": "audios/baby_slow.mp3",
             "natural": "audios/baby_natural.mp3",
-            "units": ["audios/baby_b1.mp3", "audios/baby_a.mp3", "audios/baby_b2.mp3", "audios/baby_y.mp3"]
+            "units": ["audios/b.mp3", "audios/a.mp3", "audios/b.mp3", "audios/y.mp3"]
           }
         },
         {
@@ -560,7 +560,7 @@
           "audio": {
             "slow": "audios/pencil_slow.mp3",
             "natural": "audios/pencil_natural.mp3",
-            "units": ["audios/pencil_p.mp3", "audios/pencil_e.mp3", "audios/pencil_n.mp3", "audios/pencil_c.mp3", "audios/pencil_i.mp3", "audios/pencil_l.mp3"]
+            "units": ["audios/p.mp3", "audios/e.mp3", "audios/n.mp3", "audios/c.mp3", "audios/i.mp3", "audios/l.mp3"]
           }
         },
         {
@@ -570,7 +570,7 @@
           "audio": {
             "slow": "audios/monkey_slow.mp3",
             "natural": "audios/monkey_natural.mp3",
-            "units": ["audios/monkey_m.mp3", "audios/monkey_o.mp3", "audios/monkey_n.mp3", "audios/monkey_k.mp3", "audios/monkey_ey.mp3"]
+            "units": ["audios/m.mp3", "audios/o.mp3", "audios/n.mp3", "audios/k.mp3", "audios/ey.mp3"]
           }
         },
         {
@@ -580,7 +580,7 @@
           "audio": {
             "slow": "audios/tiger_slow.mp3",
             "natural": "audios/tiger_natural.mp3",
-            "units": ["audios/tiger_t.mp3", "audios/tiger_i.mp3", "audios/tiger_g.mp3", "audios/tiger_er.mp3"]
+            "units": ["audios/t.mp3", "audios/i.mp3", "audios/g.mp3", "audios/er.mp3"]
           }
         },
         {
@@ -590,7 +590,7 @@
           "audio": {
             "slow": "audios/zebra_slow.mp3",
             "natural": "audios/zebra_natural.mp3",
-            "units": ["audios/zebra_z.mp3", "audios/zebra_e.mp3", "audios/zebra_b.mp3", "audios/zebra_r.mp3", "audios/zebra_a.mp3"]
+            "units": ["audios/z.mp3", "audios/e.mp3", "audios/b.mp3", "audios/r.mp3", "audios/a.mp3"]
           }
         }
       ]
@@ -606,7 +606,7 @@
           "audio": {
             "slow": "audios/cactus_slow.mp3",
             "natural": "audios/cactus_natural.mp3",
-            "units": ["audios/cactus_c1.mp3", "audios/cactus_a.mp3", "audios/cactus_c2.mp3", "audios/cactus_t.mp3", "audios/cactus_u.mp3", "audios/cactus_s.mp3"]
+            "units": ["audios/c.mp3", "audios/a.mp3", "audios/c.mp3", "audios/t.mp3", "audios/u.mp3", "audios/s.mp3"]
           }
         },
         {
@@ -616,7 +616,7 @@
           "audio": {
             "slow": "audios/baby_slow.mp3",
             "natural": "audios/baby_natural.mp3",
-            "units": ["audios/baby_b1.mp3", "audios/baby_a.mp3", "audios/baby_b2.mp3", "audios/baby_y.mp3"]
+            "units": ["audios/b.mp3", "audios/a.mp3", "audios/b.mp3", "audios/y.mp3"]
           }
         },
         {
@@ -626,7 +626,7 @@
           "audio": {
             "slow": "audios/pencil_slow.mp3",
             "natural": "audios/pencil_natural.mp3",
-            "units": ["audios/pencil_p.mp3", "audios/pencil_e.mp3", "audios/pencil_n.mp3", "audios/pencil_c.mp3", "audios/pencil_i.mp3", "audios/pencil_l.mp3"]
+            "units": ["audios/p.mp3", "audios/e.mp3", "audios/n.mp3", "audios/c.mp3", "audios/i.mp3", "audios/l.mp3"]
           }
         },
         {
@@ -636,7 +636,7 @@
           "audio": {
             "slow": "audios/monkey_slow.mp3",
             "natural": "audios/monkey_natural.mp3",
-            "units": ["audios/monkey_m.mp3", "audios/monkey_o.mp3", "audios/monkey_n.mp3", "audios/monkey_k.mp3", "audios/monkey_ey.mp3"]
+            "units": ["audios/m.mp3", "audios/o.mp3", "audios/n.mp3", "audios/k.mp3", "audios/ey.mp3"]
           }
         },
         {
@@ -646,7 +646,7 @@
           "audio": {
             "slow": "audios/tiger_slow.mp3",
             "natural": "audios/tiger_natural.mp3",
-            "units": ["audios/tiger_t.mp3", "audios/tiger_i.mp3", "audios/tiger_g.mp3", "audios/tiger_er.mp3"]
+            "units": ["audios/t.mp3", "audios/i.mp3", "audios/g.mp3", "audios/er.mp3"]
           }
         },
         {
@@ -656,7 +656,7 @@
           "audio": {
             "slow": "audios/zebra_slow.mp3",
             "natural": "audios/zebra_natural.mp3",
-            "units": ["audios/zebra_z.mp3", "audios/zebra_e.mp3", "audios/zebra_b.mp3", "audios/zebra_r.mp3", "audios/zebra_a.mp3"]
+            "units": ["audios/z.mp3", "audios/e.mp3", "audios/b.mp3", "audios/r.mp3", "audios/a.mp3"]
           }
         }
       ]

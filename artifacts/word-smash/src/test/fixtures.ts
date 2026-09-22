@@ -8,7 +8,7 @@ function word(id: string, units: string[]): Word {
     audio: {
       slow: `audios/${id}_slow.mp3`,
       natural: `audios/${id}_natural.mp3`,
-      units: units.map((u) => `audios/${id}_${u}.mp3`),
+      units: units.map((u) => `audios/${u}.mp3`), // shared unit clips, mirrors build-content.mjs
     },
   };
 }

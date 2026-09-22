@@ -193,17 +193,24 @@ dashed word. Audio filenames follow one rule, and the build is its only author:
 ```
 audios/<word>_slow.mp3        the whole word, slowly
 audios/<word>_natural.mp3     the whole word, natural pace
-audios/<word>_<unit>.mp3      one per unit, in order
+audios/<unit>.mp3             one per unit, SHARED by every word that uses it
 ```
 
-A unit that repeats inside a word gets a 1-based suffix so each occurrence has
-its own recording: `cactus` → `c-a-c-t-u-s` → `cactus_c1`, `cactus_a`,
-`cactus_c2`, `cactus_t`, `cactus_u`, `cactus_s`.
+Unit clips are shared, not per word: `a.mp3` serves cat, hat, flag, cactus and
+baby alike, and a unit that repeats inside a word (`cactus` → `c-a-c-t-u-s`)
+simply references `c.mp3` twice. Adding a word therefore usually needs only its
+two whole-word clips; only a unit new to the pack needs a new recording. The
+slow clip is currently a copy of the natural clip — the team will record slowed
+takes later, so keep the two files distinct.
 
-**The build never generates audio.** Recordings are made separately
-(ElevenLabs, from phonetic spellings so a unit is always spoken as its *sound* —
-`/b/` = "buh", never the letter name "bee"). If the sheet references a recording
-that is not on disk, the build fails and lists the exact filenames needed.
+**The build never generates audio.** Recordings are made separately by the
+content team (the September 2026 English set arrived as a Drive folder of
+`<word>.mp3` / `<unit>.mp3` files; earlier packs used ElevenLabs). A unit is
+always spoken as its *sound* — `/b/` = "buh", never the letter name "bee". If
+the sheet references a recording that is not on disk, the build fails and lists
+the exact filenames needed. When importing a delivery, normalise clips to mono
+44.1 kHz 64 kbps MP3 with metadata stripped (`ffmpeg -vn -map_metadata -1 -ar
+44100 -ac 1 -b:a 64k`) so the language ZIP stays small.
 
 ### Adding a word
 

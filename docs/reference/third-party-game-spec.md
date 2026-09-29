@@ -1,7 +1,7 @@
 # Curious Reader — Third-Party Game Developer Specification
 
 **Audience:** external teams building new web games/readers for the Curious Reader container
-**Status:** v1.7 · **Last updated:** 2026-08-19
+**Status:** v1.11 · **Last updated:** 2026-09-29
 
 This is a self-contained handoff document. It tells you everything you need to
 build, package, test, and upload a game for the Curious Reader container —
@@ -242,6 +242,48 @@ loading screen. Two mandatory changes:
 
 Never rely on Rive's automatic CDN fallback in a container build.
 
+### Allowed, with conditions: dotLottie animations
+
+Packaged `.lottie` files are supported as opaque ZIP-based animation assets.
+Support is **game-owned**: your engine bundle must include a browser-compatible
+dotLottie runtime and its `.lottie` files. Curious Reader does not provide,
+version, initialize, or expose a native/container dotLottie API.
+
+Put the runtime and animations under relative paths, for example
+`./assets/dotlottie/dotlottie-web.js` and
+`./assets/dotlottie/celebration.lottie`. Do not import a runtime from a CDN,
+load remote animations, or configure a network fallback. The container serves
+`.lottie` bytes unchanged as `application/zip`; it never opens or transforms the
+archive.
+
+For runtimes that accept bytes, use the `loadBinary()` helper from §2.3 so the
+same code works under Android `file://`:
+
+```js
+async function loadCelebration() {
+  try {
+    const bytes = await loadBinary('./assets/dotlottie/celebration.lottie');
+    // Use the byte-oriented API exposed by the runtime version you bundled.
+    return await createDotLottieAnimation({
+      canvas: document.querySelector('#celebration'),
+      data: bytes,
+      autoplay: true,
+      loop: false,
+    });
+  } catch (error) {
+    console.warn('Optional celebration animation unavailable', error);
+    document.querySelector('#celebration')?.setAttribute('hidden', '');
+    return null; // gameplay and loading-screen dismissal must continue
+  }
+}
+```
+
+If your bundled runtime accepts a URL rather than bytes, pass only a relative
+URL such as `./assets/dotlottie/celebration.lottie` and confirm that version
+uses XHR (not `window.fetch`) on `file://`. Prefer a byte-oriented API when
+available. Treat animation failure as non-fatal: show a static/CSS fallback or
+hide the animation, and never leave loading or gameplay waiting for it.
+
 ### Generally safe
 
 - Canvas/WebGL rendering, Web Audio API (`decodeAudioData` on buffers from
@@ -391,6 +433,7 @@ assets/
   fonts/              ← all font files your engine loads
   images/             ← images, sprite sheets
   rive/               ← rive.wasm + rive_fallback.wasm + .riv files (if using Rive)
+  dotlottie/          ← bundled browser runtime + opaque .lottie files (if used)
 sw.js                 ← optional; if present it is used only for asset discovery, never executed
 ```
 
@@ -576,6 +619,8 @@ Complete every item before submitting content.
 - [ ] Language JSON contains no absolute CDN URLs (all relative)
 - [ ] Standalone build contains no feature-flag/GTM/Sentry network code (stubbed at build time)
 - [ ] If using Rive: `assets/rive/` contains BOTH `rive.wasm` and `rive_fallback.wasm`, and `RuntimeLoader.setWasmUrl` is forced on `file:` protocol
+- [ ] If using dotLottie: the browser runtime and every `.lottie` file are bundled under relative paths (for example `assets/dotlottie/`); no CDN import, remote asset, or network fallback remains
+- [ ] If using dotLottie: the runtime loads archive bytes with the §2.3 `file://`-compatible loader (or a verified XHR-based relative-URL API) and animation failure cannot block gameplay
 - [ ] Every icon and image is the true format its extension claims (`file *.png` → `PNG image data`)
 
 ### 7b. Offline load test
@@ -589,6 +634,8 @@ with DevTools Network set to **Offline**:
 - [ ] Zero attempted external network requests in the Network tab
 - [ ] No JS console errors (analytics-failure warnings acceptable)
 - [ ] In a plain browser (no container), zero bridge errors and zero `postMessage` attempts
+- [ ] If using dotLottie: each animation plays from its relative `.lottie` file while DevTools is Offline, and a missing/corrupt archive shows the planned fallback without blocking the game
+- [ ] Repeat the dotLottie offline test in a real Android Curious Reader WebView with airplane mode enabled; desktop `file://` testing alone is not sufficient
 
 ### 7c. ZIP integrity
 
@@ -597,6 +644,7 @@ with DevTools Network set to **Offline**:
 - [ ] All ZIPs of the engine extract into one directory with no overwrites
 - [ ] After extracting engine + one language ZIP together: `index.html?cr_lang=<code>` plays fully offline
 - [ ] Every language you ship has a complete audio set (no missing files referenced by the data)
+- [ ] `.lottie` files remain packaged as opaque files with their `.lottie` extension; do not unpack or rewrite their internal archive contents
 
 ### 7d. Event emission
 
@@ -622,11 +670,15 @@ ships content to production devices.
 
 You will need from the Curious Learning team:
 
-- The server base URL (referred to below as `https://<server>`)
+- The server base URL (referred to below as `https://<server>`). The
+  production CMS is `https://cms.curiouslearning.net`; use it unless the
+  Curious Learning team directs you to a different instance (e.g. a test
+  deployment).
 - A **personal MCP token** (for the MCP route — created by a CMS user on the
   admin site's "MCP tokens" tab, see §8.1), or an allowlisted Google account
   (for the REST/admin routes)
-- Confirmation of your engine slug, `sub_app_id`, and any new language codes
+- Your intended engine slug, `sub_app_id`, and any new language codes. The
+  engine slug is reserved permanently as the first upload step (§8.2).
 
 ### 8.1 Connecting an MCP client
 
@@ -648,7 +700,7 @@ creation (what a user may grant is capped by their CMS role):
 
 | Scope | Allowed tools |
 |---|---|
-| **upload only** | `upload_core_game`, `upload_book`, `upload_language_pack`, the chunked-upload tools (`begin_upload`, `upload_chunk`, `abort_upload`), plus the read-only tools (`list_inventory`, `list_manifests`, `get_manifest`) |
+| **upload only** | Slug registry tools (`list_engine_slugs`, `create_engine_slug`, `list_core_slugs`, `create_core_slug`), upload tools (`upload_core_game`, `upload_book`, `upload_language_pack`), chunked-upload tools (`begin_upload`, `upload_chunk`, `abort_upload`), and read-only tools (`list_inventory`, `list_manifests`, `get_manifest`) |
 | **edit** | everything above, plus `promote_content`, `demote_content`, `update_version_notes`, `update_manifest` |
 
 Calling a tool beyond the token's scope returns a clear permission-denied
@@ -669,14 +721,18 @@ Example configuration for a generic MCP client:
 }
 ```
 
-The server is named `curious-reader-cms` and exposes thirteen tools:
+The server is named `curious-reader-cms` and exposes seventeen tools:
 
 | Tool | Purpose |
 |---|---|
 | `list_inventory` | Survey every content item (kind, engine, language, version, channel, size, version notes) |
+| `list_engine_slugs` | List permanent engine identities and whether each is initialized |
+| `create_engine_slug` | Permanently reserve a lowercase engine identity; requires `confirmed: true` |
+| `list_core_slugs` | List permanent engine-scoped core identities (optionally filter by `engineSlug`) |
+| `create_core_slug` | Permanently reserve a core identity for an initialized Layout B engine; requires `confirmed: true` |
 | `upload_core_game` | Upload an **engine** ZIP (the tool name uses the historical `core` filename token; it does not upload the optional middle core tier); optional `versionNotes` |
-| `upload_book` | Upload a Layout B core ZIP (`<engine>-book-<slug>.zip`); optional `bookTitle`, `filename`, `versionNotes`; inline `zipBase64` only |
-| `upload_language_pack` | Upload a language pack (+ icon); optional `versionNotes`; rejects unknown language codes |
+| `upload_book` | Upload a Layout B core ZIP (`<engine>-book-<slug>.zip`); optional `bookTitle`, `filename`, `versionNotes`; inline or chunked payload |
+| `upload_language_pack` | Upload a language pack (+ icon); optional `versionNotes`; rejects unknown language codes; auto-adds the tile to the token owner's auto-add manifest (response `autoAdded`, `autoAddManifestId`) |
 | `begin_upload` | Start a chunked upload session for a large ZIP; returns an `uploadId` (§8.1a) |
 | `upload_chunk` | Append one sequential base64 chunk to a chunked upload session |
 | `abort_upload` | Discard an in-progress chunked upload session |
@@ -690,10 +746,8 @@ The server is named `curious-reader-cms` and exposes thirteen tools:
 > For Layout A uploads, ZIP contents travel either
 > **base64-encoded inline** (`zipBase64`, fine for small files up to ~10 MB)
 > or through a **chunked upload session** (§8.1a) for anything larger:
-> `upload_core_game` and `upload_language_pack` accept an `uploadId` instead
-> of `zipBase64`. Chunked files have a **200 MB** ceiling. The Layout B
-> `upload_book` tool currently accepts **only** inline `zipBase64`; it does
-> not accept `uploadId`.
+> All three ZIP upload tools accept an `uploadId` instead of `zipBase64`.
+> Chunked files have a **200 MB** ceiling.
 
 ### 8.1a Large files: chunked uploads
 
@@ -710,7 +764,7 @@ chunks:
    response echoes `bytesReceived` and the expected `nextChunkIndex`; the
    final response (when `totalSize` was declared) includes `complete: true`
    and the server-side `sha256` of the assembled file.
-3. **`upload_core_game` / `upload_language_pack`** — pass `uploadId` instead
+3. **`upload_core_game` / `upload_book` / `upload_language_pack`** — pass `uploadId` instead
    of `zipBase64`. Optionally pass `sha256` (hex) of your original file; the
    upload is rejected on mismatch, so corruption can never land silently.
 4. **`abort_upload`** — discard a session you no longer need.
@@ -723,18 +777,43 @@ Rules and limits:
 - Sessions expire after **60 minutes of inactivity** (a background sweeper
   deletes the server-side temp data); an out-of-order or oversized chunk
   fails with a clear error telling you the expected `chunkIndex` / limits.
+- Session metadata and chunks are stored durably and shared by server
+  instances (production requires the configured shared CMS object-storage
+  bucket). Keep the returned `uploadId`: after a server restart or a request
+  routed to another instance, continue with the next sequential `chunkIndex`
+  instead of starting the file over.
 - At most **4 in-progress sessions per token**, and the server bounds total
   staging space across all sessions — if you hit a "staging area is full" or
   "too many in-progress sessions" error, `abort_upload` unused sessions or
   retry shortly.
-- On any "unknown or expired uploadId" error, just start over with
-  `begin_upload` — nothing partial is ever ingested.
+- An "unknown or expired uploadId" means the session expired, was aborted, was
+  already consumed, or belongs to a different token. Start over with
+  `begin_upload`; nothing partial is ever ingested.
 
-### 8.2 Step 1 — survey the inventory
+### 8.2 Step 1 — reserve the engine slug
 
-Call `list_inventory` (no arguments) to see every content item with its kind
-(`engine` / `core` / `lang`), engine, language, version, channel status
-(`development` / `production`), and size. Use it before and after uploads.
+For a new game, engine identity creation is always the first step:
+
+1. Call `list_engine_slugs` and make sure the intended identity is not already
+   reserved.
+2. Call `create_engine_slug`:
+
+   ```json
+   {
+     "tool": "create_engine_slug",
+     "arguments": { "slug": "wordgarden", "confirmed": true }
+   }
+   ```
+
+Engine slugs use lowercase letters, digits, and hyphens. A reservation is
+**permanent and global**: it cannot be renamed, deleted, reclaimed, or reused,
+even if content is later retired. The explicit `confirmed: true` acknowledges
+that irreversible identity rule. Duplicate or invalid slugs are rejected
+without creating or changing anything.
+
+For an existing game, use its already-registered entry from
+`list_engine_slugs`; do not create another spelling. You may also call
+`list_inventory` (no arguments) to survey uploaded versions and status.
 
 ### 8.3 Step 2 — upload the engine ZIP (`upload_core_game`)
 
@@ -742,8 +821,9 @@ Despite its historical name, `upload_core_game` uploads the **engine tier**.
 It must not be interpreted as an instruction to rename the engine to core. The
 optional Layout B middle core tier is uploaded separately with `upload_book`.
 
-For a brand-new engine you must include `title` and `urlTemplate` (they
-register the engine); for a new version of an existing engine, only
+The `engineSlug` must already have been reserved in §8.2. For the first upload
+you must include `title` and `urlTemplate` (they initialize the reserved
+engine); for a new version of an initialized engine, only
 `engineSlug` and the ZIP payload (`zipBase64`, or `uploadId` for large files
 — §8.1a) are required.
 
@@ -767,15 +847,33 @@ register the engine); for a new version of an existing engine, only
 - The response echoes the created content item, including its `id` — note it;
   you'll need it for promotion.
 
-### 8.4 Step 3 — upload each Layout B core ZIP (`upload_book`)
+### 8.4 Step 3 — reserve and upload each Layout B core
 
 > **Only for Layout B.** Skip this step for a 2-tier Layout A game. For a
 > 3-tier game, upload one core ZIP for each content unit before uploading its
 > language packs.
 
-One call per core unit (e.g. per book). This uploads the
-language-agnostic mid tier (`<engine>-book-<slug>.zip`) and registers the core
-unit if it does not exist yet.
+Before uploading each new core unit, reserve it:
+
+```json
+{
+  "tool": "create_core_slug",
+  "arguments": {
+    "engineSlug": "storyplayer",
+    "slug": "my-first-book",
+    "confirmed": true
+  }
+}
+```
+
+The engine must already be initialized as Layout B (`hasCoreLevel: true`).
+Core identity is permanent and unique **within that engine**: the same core
+slug may be reserved by a different engine, but can never be renamed, deleted,
+or reused for another unit under this engine. Use `list_core_slugs` to inspect
+the valid engine/core pairs.
+
+Then call `upload_book` once per reserved core unit to upload its
+language-agnostic mid tier (`<engine>-book-<slug>.zip`):
 
 ```json
 {
@@ -790,9 +888,9 @@ unit if it does not exist yet.
 }
 ```
 
-- Arguments are `engineSlug`, `bookSlug`, and `zipBase64`, with optional
-  `bookTitle`, `filename`, and `versionNotes`. This tool currently
-  accepts **only** `zipBase64` — it does **not** accept `uploadId` or `sha256`.
+- Arguments are `engineSlug`, `bookSlug`, and one ZIP payload (`zipBase64` or
+  `uploadId`), with optional `bookTitle`, `filename`, `versionNotes`, and
+  chunked-upload `sha256`.
 - `bookTitle` is optional; if omitted, an existing book keeps its current
   title and a brand-new book uses the slug as its title. Renaming an
   **existing** book requires an "edit"-scope token — with an upload-only
@@ -809,7 +907,8 @@ the core-unit slug as `bookSlug` (the frozen wire name). For Layout A, omit
 > **Language codes are human-curated.** The CMS keeps a canonical language
 > list maintained by Curious Learning staff, and uploads (MCP or web) that
 > target an unknown `langCode` are **rejected** — a new language is never
-> created implicitly by an upload. If you're shipping a language the catalog
+> created implicitly by an upload. Engine and Layout B core slugs are likewise
+> never created implicitly by language upload. If you're shipping a language the catalog
 > doesn't have yet, ask the Curious Learning team to add it first.
 
 You may also pass an optional `versionNotes` string on `upload_core_game`
@@ -832,11 +931,21 @@ version (visible in the inventory and manifest tooling; editable later with
 
 - For a large pack, replace `zipBase64` with an `uploadId` from a chunked
   upload session (§8.1a); optionally add `sha256` for integrity verification.
+- **Auto-add manifest.** Each successful language upload is also appended
+  as a development-channel entry to the **auto-add manifest** configured
+  for the CMS user who owns your token (Curious Learning staff set this on
+  the CMS Allowlist tab; by default it is the protected "all development"
+  manifest). Re-uploading a new version of the same tile never creates a
+  duplicate entry. The response is the stored item plus `autoAdded`
+  (`true` when the tile is now present in that manifest) and
+  `autoAddManifestId`. Ask the Curious Learning team if you want your
+  uploads routed to a specific test manifest.
 - `iconBase64` is optional per upload but every tile needs an icon before it
   ships — supply a true-PNG (§4). Icons are small; they always travel inline.
-- For a **Layout B** game, add
-  `"bookSlug": "my-first-book"` — this registers the core unit and the
-  (engine, core, language) tile.
+- For a **Layout B** game, add `"bookSlug": "my-first-book"`. It must match a
+  core slug previously reserved for this exact engine in §8.4. Missing,
+  unknown, or wrong-engine core values are rejected before a staged upload is
+  consumed.
 
 ### 8.5 Step 5 — verify, then promote
 
@@ -895,7 +1004,11 @@ sign-in via the admin site) rather than an MCP token.
 
 | Action | Endpoint | Notes |
 |---|---|---|
-| Upload engine ZIP | `POST /api/content/core` | multipart: `file` + fields `engineSlug` (+ `title`, `urlTemplate`, `hasCoreLevel` for new engines) |
+| List engine reservations | `GET /api/content-slugs/engines` | Includes initialization/readiness state |
+| Reserve engine slug | `POST /api/content-slugs/engines` | JSON: `slug`, `confirmed: true`; permanent/no reuse |
+| List core reservations | `GET /api/content-slugs/cores?engineSlug=…` | Engine filter is optional |
+| Reserve core slug | `POST /api/content-slugs/cores` | JSON: `engineSlug`, `slug`, `confirmed: true`; initialized Layout B engines only |
+| Upload engine ZIP | `POST /api/content/core` | multipart: `file` + reserved `engineSlug` (+ `title`, `urlTemplate`, `hasCoreLevel` for first upload) |
 | Upload core ZIP (Layout B mid tier) | `POST /api/content/book` | multipart: `file` + `engineSlug`, `bookSlug` (the core-unit slug; + `bookTitle`) |
 | Upload language pack | `POST /api/content/lang` | multipart: `file` (+ `icon` PNG) + `engineSlug`, `langCode` (+ `bookSlug` for Layout B) |
 | List inventory | `GET /api/inventory` | |
@@ -905,7 +1018,8 @@ sign-in via the admin site) rather than an MCP token.
 Uploads are capped at **200 MB per file**. The web admin UI at
 `https://<server>/admin` offers the same operations interactively (upload
 forms, hierarchical engine → (core →) lang inventory tree, in-browser
-game preview, and promote buttons) — promotion in all interfaces is restricted
+game preview, permanent engine/core slug creation cards, registry-backed
+dependent selectors, and promote buttons) — promotion in all interfaces is restricted
 to Curious Learning staff.
 
 ---
@@ -921,12 +1035,16 @@ to Curious Learning staff.
 7. Icons: true PNG, square, one per tile, uploaded alongside the language pack (not inside the ZIP).
 8. Instrument the `cr_event` bridge (§6): fresh UUID v4 per payload, 64 KB cap, fire-and-forget, no-op outside the container, no network I/O for reporting.
 9. Verify offline in Chrome from `file://` with the network set to Offline before submitting.
-10. Upload via MCP (`/mcp`, Bearer personal token from the CMS "MCP tokens" tab — shown once at creation; "upload only" scope suffices for uploads, "edit" scope needed to promote). Layout A: `upload_core_game` → `upload_language_pack` (×N). Layout B: `upload_core_game` → `upload_book` (× core units) → `upload_language_pack` (× core/language combinations). Then use `list_inventory` and `promote_content`. For ZIPs over ~10 MB, use `begin_upload` → sequential `upload_chunk` calls (0-based indexes; 4–8 MB recommended, 16 MB decoded maximum) → pass `uploadId` (+ optional `sha256`) to `upload_core_game` or `upload_language_pack` (§8.1a; 200 MB ceiling; abort unused sessions with `abort_upload`). `upload_book` currently takes inline `zipBase64` only. REST/admin UI are alternatives. Language codes must already exist in the CMS catalog.
+10. Upload via MCP (`/mcp`, Bearer personal token from the CMS "MCP tokens" tab — shown once at creation; "upload only" scope suffices for reservations/uploads, "edit" needed to promote). First call `list_engine_slugs` → `create_engine_slug` (permanent, `confirmed:true`) for a new game. Layout A: `upload_core_game` → `upload_language_pack` (×N). Layout B: `upload_core_game` → for each unit `create_core_slug` (permanent per engine) → `upload_book` → `upload_language_pack` (× languages). Then use `list_inventory` and `promote_content`. For ZIPs over ~10 MB, use `begin_upload` → sequential `upload_chunk` calls (0-based; 4–8 MB recommended, 16 MB decoded maximum) → pass `uploadId` (+ optional `sha256`) to any ZIP upload tool (§8.1a; 200 MB ceiling; abort unused sessions). REST/admin UI are alternatives. Language codes must already exist in the CMS catalog.
 11. Promotion is not delivery: after promote, the Curious Learning team must **Publish** to the public CDN bucket before devices see the new content (§8.5a).
 
 ---
 
 *Changelog:*
+- *1.11 — 2026-09-29 — Claude Code — Named the production CMS base URL (`https://cms.curiouslearning.net`) in the §8 prerequisites; `https://<server>` remains the placeholder throughout for non-production instances.*
+- *1.10 — 2026-09-07 — Claude Code — `upload_language_pack` now auto-adds the uploaded tile to the token owner's configured auto-add manifest (as the CMS web upload already did) and returns `autoAdded` / `autoAddManifestId`; §8.1 tool table and §8.4a updated.*
+- *1.9 — 2026-09-03 — Replit Agent — Added game-owned dotLottie support: bundled browser runtimes and relative `.lottie` archives are supported offline as opaque `application/zip` assets, with copyable binary-loading guidance, non-fatal fallback requirements, packaging examples, and desktop plus real-Android verification checks.*
+- *1.8 — 2026-08-19 — Replit Agent — Added immutable slug reservation as the mandatory first step: engine identities are global, core identities are permanent per engine, neither is created by uploads, upload-only MCP tokens can list/create both, all ZIP tools support chunked payloads, and REST/admin alternatives use registry-backed creation and selection.*
 - *1.7 — 2026-08-19 — Agent — Corrected the packaging guidance: both 2-tier (engine + lang) and 3-tier (engine + core + lang) structures are supported for new work. Layout B is appropriate when language-independent content, such as a book's illustrations and structure, is reused across multiple languages; the engine remains the engine and must not be renamed “core.” Removed the contradictory legacy/deprecation guidance introduced in v1.6.*
 - *1.6 — 2026-08-19 — Agent — Synced the MCP upload contract with the server: all thirteen tools and upload-only permissions are documented; large Layout A ZIPs use owner-scoped, sequential chunked sessions (200 MB files, 16 MB decoded chunks, 60-minute inactivity expiry, `abort_upload` cleanup) before `upload_core_game` or `upload_language_pack`. Marked the entire Layout B / book pathway as legacy and deprecated for new games; `upload_book` is retained only for existing systems, accepts inline `zipBase64` only, and requires an edit token when changing an existing book title.*
 - *1.5 — 2026-08-19 — Agent — Added the `upload_book` MCP tool for the Layout B core ZIP (`<engine>-book-<slug>.zip`): new §8.4 upload step, tool table expanded to thirteen tools, "upload only" scope includes it, renaming an existing book requires an "edit"-scope token, and the former caveat that core-tier ZIPs required REST/admin was removed. Version 1.6 corrects the initially documented payload options and deprecates this pathway for new games.*

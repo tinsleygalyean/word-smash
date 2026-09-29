@@ -144,14 +144,21 @@ Two environment variables, from the Curious Learning team:
 
 | Variable | What it is |
 |---|---|
-| `CR_CMS_SERVER_URL` | Base URL of the CMS MCP server |
-| `CR_MCP_API_KEY` | MCP API key, sent as `Authorization: Bearer <key>` |
+| `CR_CMS_SERVER_URL` | The CMS MCP endpoint. Production is `https://cms.curiouslearning.net/mcp` |
+| `CR_MCP_API_KEY` | Personal MCP token (`crmcp_…`), sent as `Authorization: Bearer <key>` |
+
+> The endpoint and the token format are defined by the container team's
+> [third-party game spec](reference/third-party-game-spec.md) §8. Tokens are
+> **personal, not shared** — a CMS user creates one on the admin site's "MCP
+> tokens" tab and the value is shown exactly once. If the upload returns a 404
+> HTML page rather than JSON, the endpoint is wrong or that deployment is down;
+> check §8 of the spec for the current base URL.
 
 Set them yourself where the command runs. Locally the simplest path is the
 git-ignored `.env` at the repository root:
 
 ```
-CR_CMS_SERVER_URL=https://curious-learning-parent.replit.app/mcp
+CR_CMS_SERVER_URL=https://cms.curiouslearning.net/mcp
 CR_MCP_API_KEY=<paste the key here>
 ```
 
@@ -283,7 +290,7 @@ format — devices get the ZIPs from `game:build`.
 Other source documents named in the original build prompt:
 [Game Design Document v3.0](https://docs.google.com/document/d/1TH3G68bQXPSZQMiz5dDX9QtxI3nFIoqXRRPgB2GAZ3Q/edit)
 and the [Curious Reader Third-Party Game Spec v1.1](https://drive.google.com/file/d/1311hplshajQa9kqUhCqMxZqIhx7sobx2/view)
-(checked in at `attached_assets/third-party-game-spec_(3)_1787166445025.md`).
+(checked in at `docs/reference/third-party-game-spec.md`).
 
 ---
 

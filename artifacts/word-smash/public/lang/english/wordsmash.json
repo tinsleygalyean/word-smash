@@ -32,7 +32,7 @@
           "audio": {
             "slow": "audios/egg_slow.mp3",
             "natural": "audios/egg_natural.mp3",
-            "units": ["audios/e.mp3", "audios/gg.mp3"]
+            "units": ["audios/e.mp3", "audios/g.mp3"]
           }
         },
         {
@@ -98,7 +98,7 @@
           "audio": {
             "slow": "audios/egg_slow.mp3",
             "natural": "audios/egg_natural.mp3",
-            "units": ["audios/e.mp3", "audios/gg.mp3"]
+            "units": ["audios/e.mp3", "audios/g.mp3"]
           }
         },
         {
@@ -550,7 +550,7 @@
           "audio": {
             "slow": "audios/baby_slow.mp3",
             "natural": "audios/baby_natural.mp3",
-            "units": ["audios/b.mp3", "audios/a.mp3", "audios/b.mp3", "audios/y.mp3"]
+            "units": ["audios/b.mp3", "audios/a_long.mp3", "audios/b.mp3", "audios/y.mp3"]
           }
         },
         {
@@ -560,7 +560,7 @@
           "audio": {
             "slow": "audios/pencil_slow.mp3",
             "natural": "audios/pencil_natural.mp3",
-            "units": ["audios/p.mp3", "audios/e.mp3", "audios/n.mp3", "audios/c.mp3", "audios/i.mp3", "audios/l.mp3"]
+            "units": ["audios/p.mp3", "audios/e.mp3", "audios/n.mp3", "audios/s.mp3", "audios/i.mp3", "audios/l.mp3"]
           }
         },
         {
@@ -570,7 +570,7 @@
           "audio": {
             "slow": "audios/monkey_slow.mp3",
             "natural": "audios/monkey_natural.mp3",
-            "units": ["audios/m.mp3", "audios/o.mp3", "audios/n.mp3", "audios/k.mp3", "audios/ey.mp3"]
+            "units": ["audios/m.mp3", "audios/u.mp3", "audios/n.mp3", "audios/k.mp3", "audios/ey.mp3"]
           }
         },
         {
@@ -580,7 +580,7 @@
           "audio": {
             "slow": "audios/tiger_slow.mp3",
             "natural": "audios/tiger_natural.mp3",
-            "units": ["audios/t.mp3", "audios/i.mp3", "audios/g.mp3", "audios/er.mp3"]
+            "units": ["audios/t.mp3", "audios/i_long.mp3", "audios/g.mp3", "audios/er.mp3"]
           }
         },
         {
@@ -590,7 +590,7 @@
           "audio": {
             "slow": "audios/zebra_slow.mp3",
             "natural": "audios/zebra_natural.mp3",
-            "units": ["audios/z.mp3", "audios/e.mp3", "audios/b.mp3", "audios/r.mp3", "audios/a.mp3"]
+            "units": ["audios/z.mp3", "audios/ee.mp3", "audios/b.mp3", "audios/r.mp3", "audios/u.mp3"]
           }
         }
       ]
@@ -616,7 +616,7 @@
           "audio": {
             "slow": "audios/baby_slow.mp3",
             "natural": "audios/baby_natural.mp3",
-            "units": ["audios/b.mp3", "audios/a.mp3", "audios/b.mp3", "audios/y.mp3"]
+            "units": ["audios/b.mp3", "audios/a_long.mp3", "audios/b.mp3", "audios/y.mp3"]
           }
         },
         {
@@ -626,7 +626,7 @@
           "audio": {
             "slow": "audios/pencil_slow.mp3",
             "natural": "audios/pencil_natural.mp3",
-            "units": ["audios/p.mp3", "audios/e.mp3", "audios/n.mp3", "audios/c.mp3", "audios/i.mp3", "audios/l.mp3"]
+            "units": ["audios/p.mp3", "audios/e.mp3", "audios/n.mp3", "audios/s.mp3", "audios/i.mp3", "audios/l.mp3"]
           }
         },
         {
@@ -636,7 +636,7 @@
           "audio": {
             "slow": "audios/monkey_slow.mp3",
             "natural": "audios/monkey_natural.mp3",
-            "units": ["audios/m.mp3", "audios/o.mp3", "audios/n.mp3", "audios/k.mp3", "audios/ey.mp3"]
+            "units": ["audios/m.mp3", "audios/u.mp3", "audios/n.mp3", "audios/k.mp3", "audios/ey.mp3"]
           }
         },
         {
@@ -646,7 +646,7 @@
           "audio": {
             "slow": "audios/tiger_slow.mp3",
             "natural": "audios/tiger_natural.mp3",
-            "units": ["audios/t.mp3", "audios/i.mp3", "audios/g.mp3", "audios/er.mp3"]
+            "units": ["audios/t.mp3", "audios/i_long.mp3", "audios/g.mp3", "audios/er.mp3"]
           }
         },
         {
@@ -656,7 +656,7 @@
           "audio": {
             "slow": "audios/zebra_slow.mp3",
             "natural": "audios/zebra_natural.mp3",
-            "units": ["audios/z.mp3", "audios/e.mp3", "audios/b.mp3", "audios/r.mp3", "audios/a.mp3"]
+            "units": ["audios/z.mp3", "audios/ee.mp3", "audios/b.mp3", "audios/r.mp3", "audios/u.mp3"]
           }
         }
       ]

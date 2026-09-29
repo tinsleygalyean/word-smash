@@ -88,14 +88,26 @@ Rules:
   them in both dev and the offline bundle.
 - **Sounds, never letter names.** Every unit clip speaks the sound the unit makes,
   never the letter's name. This is a hard content rule enforced at recording time.
-- **Unit clips are shared.** `audios/<unit>.mp3` is one recording per unit,
-  referenced by every word that contains it (`audios/a.mp3` serves *cat*, *hat*,
-  *flag*, *baby*); a unit that repeats inside a word references the same clip
-  twice. Whole-word clips stay per word (`audios/<word>_slow.mp3`,
-  `audios/<word>_natural.mp3`). The content team's position (2026-09) is that each
-  unit in the pack makes the same sound in every word that uses it, so one
-  recording per unit is correct. The slow clip is currently a copy of the natural
-  clip; slowed takes will replace it later without a schema change.
+- **The sheet names the clip per unit; letters do not.** A unit's letters and
+  the recording that voices it are separate. The levels sheet's **"Audio files"**
+  column (column D) gives the clip for each unit, dash-separated and aligned
+  one-to-one with the word's units: `p-e-n-c-i-l` is voiced `p-e-n-s-i-l`, so
+  *pencil*'s `c` plays `audios/s.mp3`. Deriving the clip from the letter instead
+  is what made *pencil* say "kuh", *baby* say "ah" and *tiger* say "ih".
+  Current substitutions: `egg` gg→g · `pencil` c→s · `monkey` o→u ·
+  `tiger` i→i_long · `zebra` e→ee, a→u · `baby` a→a_long.
+- **Clips are shared where the sound really is shared.** `audios/<clip>.mp3` is
+  one recording referenced by every unit that sounds that way (`audios/a.mp3`
+  serves *cat*, *hat*, *flag*); a unit repeating inside a word references the
+  same clip twice. Whole-word clips stay per word (`audios/<word>_slow.mp3`,
+  `audios/<word>_natural.mp3`).
+- **Clip names are lowercase `a-z`, `0-9`, `_`.** Non-ASCII names survive a
+  spreadsheet but break on device: macOS stores filenames decomposed while the
+  ZIP and Linux carry them composed, so the file goes missing on one platform
+  only. `build-content.mjs` rejects anything else.
+- **The build validates column D**: audio-unit count must equal word-unit count,
+  no empty entries, ASCII only. A blank column falls back to the word's own
+  units, so a language that has not filled it in still builds.
 
 The current English pack: **10 levels × 6 words**, **24 distinct words**, backed
 by **87 MP3 files** (48 whole-word + 39 shared unit clips).

@@ -229,6 +229,10 @@ Each case: **ID · what it verifies · method · trace**. Method tags: `AUTO-EXI
 
 - **TC-CNT-01** For every word in F-PACK-EN: `units.length === audio.units.length`
   and all referenced MP3 files exist on disk. `AUTO-TARGET`. Trace: I.1.1, I.7.
+- **TC-CNT-04** Each unit resolves to the clip the sheet's "Audio files"
+  column names, not to its own letters: *pencil* `c`→`s`, *baby* `a`→`a_long`,
+  *tiger* `i`→`i_long`, *monkey* `o`→`u`, *zebra* `e`→`ee` and `a`→`u`,
+  *egg* `gg`→`g`. `AUTO-TARGET`. Trace: I.1.3.
 - **TC-CNT-02** Levels are 1–10; odd levels `ghost:true`, even `ghost:false`; each
   level has 6 words. `AUTO-TARGET`. Trace: I.1.1, UISPEC 4.
 - **TC-CNT-03** Recurring words keep a stable `id` across levels while `units` may

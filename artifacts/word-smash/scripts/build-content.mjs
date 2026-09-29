@@ -4,7 +4,7 @@
 //
 // The sheet has one tab per language. Each content row is three columns:
 //
-//   level | word with dashes at breakpoints | ghost (y/n)
+//   level | word with dashes at breakpoints | ghost (y/n) | audio files
 //
 // Columns to the right are the team's audio-tracking notes and are ignored.
 //
@@ -118,11 +118,17 @@ async function fetchTabCsv(sheetId, tab) {
 // every word of the pack (decided 2026-09, see DECISIONS.md). A unit that repeats
 // inside a word ("cactus" → c,a,c,t,u,s) simply references the same clip twice.
 // This must match the recorded files in public/lang/<code>/audios/ exactly.
-function wordAudio(id, units) {
+// A unit's LETTERS and the RECORDING that voices it are different things, and
+// conflating them is how the pack ended up saying "kuh" for the c in "pencil".
+// The sheet's "Audio files" column names the clip per unit — `p-e-n-c-i-l`
+// voiced as `p-e-n-s-i-l` — so the same letter can sound different in different
+// words, and one recording can serve every word where the sound really is the
+// same. `clips` is that column, already split and validated against `units`.
+function wordAudio(id, clips) {
   return {
     slow: `audios/${id}_slow.mp3`,
     natural: `audios/${id}_natural.mp3`,
-    units: units.map((u) => `audios/${u}.mp3`),
+    units: clips.map((c) => `audios/${c}.mp3`),
   };
 }
 
@@ -132,7 +138,7 @@ function buildPack(langCode, rows, errors, warnings) {
   const byLevel = new Map();
   const seenPerLevel = new Map(); // level → Set(word)
 
-  rows.forEach(({ level, word, ghost, line }) => {
+  rows.forEach(({ level, word, ghost, audio, line }) => {
     const where = `row ${line}`;
 
     if (!/^\d+$/.test(level)) { errors.push(`${where}: level "${level}" is not a whole number`); return; }
@@ -163,6 +169,41 @@ function buildPack(langCode, rows, errors, warnings) {
       return;
     }
 
+    // ── which recording voices each unit (sheet column "Audio files") ──────
+    // Falling back to the word's own units keeps a language that has not filled
+    // the column in working, and keeps this backward-compatible.
+    const rawAudio = (audio ?? "").trim();
+    const clips = rawAudio ? rawAudio.split("-") : units;
+    if (rawAudio) {
+      if (clips.some((c) => c === "")) {
+        errors.push(
+          `${where}: audio "${rawAudio}" for "${raw}" has an empty entry (leading, trailing, or doubled dash)`
+        );
+        return;
+      }
+      if (clips.length !== units.length) {
+        // The failure this catches: a dropped dash turns two clips into one
+        // nonexistent name, which would otherwise surface as a puzzling
+        // missing-file error instead of pointing at the real mistake.
+        errors.push(
+          `${where}: "${raw}" has ${units.length} unit(s) but its audio "${rawAudio}" has ` +
+            `${clips.length} — they must line up one to one`
+        );
+        return;
+      }
+      const bad = clips.filter((c) => !/^[a-z0-9_]+$/.test(c));
+      if (bad.length) {
+        // Non-ASCII survives a spreadsheet happily and then breaks on device:
+        // macOS stores filenames decomposed, the ZIP and Linux carry them
+        // composed, and the file goes missing on one platform only.
+        errors.push(
+          `${where}: audio "${rawAudio}" for "${raw}" contains ${bad.map((c) => `"${c}"`).join(", ")} — ` +
+            `clip names must be lowercase a-z, 0-9 or _`
+        );
+        return;
+      }
+    }
+
     const id = units.join("");
     const seen = seenPerLevel.get(lvl) ?? new Set();
     if (seen.has(id)) {
@@ -178,7 +219,7 @@ function buildPack(langCode, rows, errors, warnings) {
       id,
       display: id,
       units,
-      audio: wordAudio(id, units),
+      audio: wordAudio(id, clips),
     });
     byLevel.set(lvl, entry);
   });
@@ -291,6 +332,9 @@ async function buildLang(langCode, tab, config, args) {
       level: (cells[0] ?? "").trim(),
       word: (cells[1] ?? "").trim(),
       ghost: (cells[2] ?? "").trim(),
+      // "Audio files" — which recording voices each unit. Blank means the
+      // unit's own letters name the clip.
+      audio: (cells[3] ?? "").trim(),
       line: i + 1,
     }))
     // Header/spacer rows have a non-numeric first column; content rows start

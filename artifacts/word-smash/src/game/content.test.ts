@@ -33,10 +33,27 @@ describe('level structure (TC-CNT-02)', () => {
     }
   });
 
-  it('has the shipped totals: 24 distinct words, 87 MP3 references (48 whole-word + 39 shared unit clips)', () => {
+  it('has the shipped totals: 24 distinct words, 88 MP3 references (48 whole-word + 40 unit clips)', () => {
     expect(new Set(allWords.map((w) => w.id)).size).toBe(24);
     const refs = new Set(allWords.flatMap((w) => [w.audio.slow, w.audio.natural, ...w.audio.units]));
-    expect(refs.size).toBe(87);
+    expect(refs.size).toBe(88);
+  });
+
+  it('voices a unit with the clip the sheet names, not the unit\'s own letters (TC-CNT-04)', () => {
+    // The sheet's "Audio files" column decouples the letters shown from the
+    // sound played, so the same letter can differ between words. These five
+    // were audibly wrong when unit clips were derived from the letters.
+    const clipFor = (wordId: string, unit: string) => {
+      const w = allWords.find((x) => x.id === wordId && x.units.includes(unit));
+      return w?.audio.units[w.units.indexOf(unit)];
+    };
+    expect(clipFor('pencil', 'c')).toBe('audios/s.mp3');      // soft c, not /k/
+    expect(clipFor('baby', 'a')).toBe('audios/a_long.mp3');   // "ay", not "ah"
+    expect(clipFor('tiger', 'i')).toBe('audios/i_long.mp3');  // "eye", not "ih"
+    expect(clipFor('monkey', 'o')).toBe('audios/u.mp3');      // "uh", not "aw"
+    expect(clipFor('zebra', 'e')).toBe('audios/ee.mp3');      // "ee", not "eh"
+    expect(clipFor('zebra', 'a')).toBe('audios/u.mp3');       // schwa, not "ah"
+    expect(clipFor('egg', 'gg')).toBe('audios/g.mp3');        // one g clip serves gg
   });
 });
 
